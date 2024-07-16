@@ -1,2 +1,2 @@
-import { expect } from "@jest/globals";
-expect.extend({});
+import toBeUuid from "./src/to-be-uuid";
+expect.extend({ toBeUuid });

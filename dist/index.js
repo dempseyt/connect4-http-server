@@ -9,9 +9,7 @@ const port = 3000;
 app.get("/", (req, res) => {
     res.send("Hello World");
 });
-app.post("/login", () => { });
-app.post("/register", () => { });
-app.post("/logout", () => { });
 app.listen(port, () => {
     console.log(`Listening on port ${port}`);
 });
+exports.default = app;
