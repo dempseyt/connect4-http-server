@@ -1,3 +1,9 @@
+import {
+  CreateUserParams,
+  PersistedUser,
+  UserRepository,
+} from "./user-repository";
+
 export default class InMemoryUserRepository implements UserRepository {
   private users = new Map();
   constructor() {

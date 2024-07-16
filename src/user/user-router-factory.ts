@@ -1,5 +1,5 @@
-import { UserServiceInterface } from "@/user/user-service";
 import express from "express";
+import { UserServiceInterface } from "./user-service";
 
 const userRouterFactory = (userService: UserServiceInterface) => {
   const userRouter = express.Router();

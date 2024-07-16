@@ -11,5 +11,5 @@
     }
   },
   "lib": ["ES2015"],
-  "include": ["src/*", "src/user/user-router.ts"]
+  "include": ["src/*", "src/jest.d.ts"]
 }

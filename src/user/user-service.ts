@@ -1,3 +1,5 @@
+import InMemoryUserRepository from "./in-memory-user-repository";
+
 type Uuid = `${string}-${string}-${string}-${string}`;
 type User = {
   firstName: string;
@@ -10,8 +12,8 @@ export interface UserServiceInterface {
 }
 
 class UserService implements UserServiceInterface {
-  #userRepository: UserRepository;
-  constructor(userRepository: UserRepository) {
+  #userRepository: InMemoryUserRepository;
+  constructor(userRepository: InMemoryUserRepository) {
     this.#userRepository = userRepository;
   }
 

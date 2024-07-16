@@ -1,14 +1,14 @@
-interface UserRepository {
+export interface UserRepository {
   create: (user: CreateUserParams) => Promise<PersistedUser>;
 }
 
-type CreateUserParams = {
+export type CreateUserParams = {
   firstName: string;
   lastName: string;
   email: string;
 };
 
-type PersistedUser = {
+export type PersistedUser = {
   firstName: string;
   lastName: string;
   email: string;
