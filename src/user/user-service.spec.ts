@@ -1,7 +1,7 @@
 import argon2 from "argon2";
 import InMemoryUserRepository from "./in-memory-user-repository";
 import UserService, {
-  LoginFailedError,
+  AuthenticationFailedError,
   UserAlreadyExistsError,
 } from "./user-service";
 
@@ -64,10 +64,10 @@ describe("user-service", () => {
       });
     });
   });
-  describe("user login", () => {
+  describe("user authentication", () => {
     describe("given a registered user", () => {
       describe("and invalid credentials for that user", () => {
-        it("throws a 'Login failed' error", async () => {
+        it("throws a 'Authentication failed' error", async () => {
           const userRepository = new InMemoryUserRepository();
           const userService = new UserService(userRepository);
           const userDetails = {
@@ -81,8 +81,23 @@ describe("user-service", () => {
             email: "icanlead@lies.com",
             password: "wrongpassword",
           };
-          expect(userService.login(userCredentials)).rejects.toThrow(
-            new LoginFailedError("Login failed")
+          expect(userService.authenticate(userCredentials)).rejects.toThrow(
+            new AuthenticationFailedError("Authentication failed")
+          );
+        });
+      });
+    });
+    describe("given an unregistered user", () => {
+      describe("when an authentication attempt is made", () => {
+        it("throws an 'Authentication failed' error", () => {
+          const userRepository = new InMemoryUserRepository();
+          const userService = new UserService(userRepository);
+          const userCredentials = {
+            email: "remarkable@journey.com",
+            password: "iluvbowser",
+          };
+          expect(userService.authenticate(userCredentials)).rejects.toThrow(
+            new AuthenticationFailedError("Authentication failed")
           );
         });
       });
