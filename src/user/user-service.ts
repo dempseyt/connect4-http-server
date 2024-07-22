@@ -3,13 +3,13 @@ import { isEmpty } from "ramda";
 import { User, UserCredentials, UserRepository } from "./user-repository";
 
 export class UserAlreadyExistsError extends Error {}
-export class LoginFailedError extends Error {}
+export class AuthenticationFailedError extends Error {}
 
 type Uuid = `${string}-${string}-${string}-${string}`;
 
 export interface UserServiceInterface {
   create: (userDetails: User) => Promise<User & { uuid: Uuid }>;
-  login: (userCredentials: UserCredentials) => Promise<void>;
+  authenticate: (userCredentials: UserCredentials) => Promise<void>;
 }
 
 class UserService implements UserServiceInterface {
@@ -29,14 +29,18 @@ class UserService implements UserServiceInterface {
     }
   }
 
-  async login({ email, password }: UserCredentials) {
-    const userDetails = await this.userRepository.findByEmail(email);
-    const isValidPassword = await argon2.verify(
-      userDetails[0].password,
-      password
-    );
-    if (!isValidPassword) {
-      throw new LoginFailedError("Login failed");
+  async authenticate({ email, password }: UserCredentials) {
+    const userDetails = (await this.userRepository.findByEmail(email))[0];
+    if (userDetails !== undefined) {
+      const isValidPassword = await argon2.verify(
+        userDetails.password,
+        password
+      );
+      if (!isValidPassword) {
+        throw new AuthenticationFailedError("Authentication failed");
+      }
+    } else {
+      throw new AuthenticationFailedError("Authentication failed");
     }
   }
 }
