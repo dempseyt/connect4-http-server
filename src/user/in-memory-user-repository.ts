@@ -1,24 +1,20 @@
-import {
-  CreateUserParams,
-  PersistedUser,
-  UserRepository,
-} from "./user-repository";
+import { PersistedUser, User, UserRepository, Uuid } from "./user-repository";
 
 export default class InMemoryUserRepository implements UserRepository {
-  private users = new Map();
+  private users: Map<Uuid, PersistedUser>;
   constructor() {
     this.users = new Map();
   }
 
-  async create(user: CreateUserParams): Promise<PersistedUser> {
+  async create(user: User): Promise<PersistedUser> {
     const userUuid = crypto.randomUUID();
-    await this.users.set(userUuid, user);
-    const { firstName, lastName, email } = user;
-    return {
-      firstName,
-      lastName,
-      email,
-      uuid: userUuid,
-    };
+    await this.users.set(userUuid, { ...user, uuid: userUuid });
+    return Promise.resolve({ ...user, uuid: userUuid });
+  }
+
+  async findByEmail(email: string) {
+    return Promise.resolve(
+      Array.from(this.users.values()).filter((user) => user.email === email)
+    );
   }
 }

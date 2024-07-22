@@ -1,24 +1,43 @@
-import InMemoryUserRepository from "./in-memory-user-repository";
+import argon2 from "argon2";
+import { isEmpty } from "ramda";
+import { User, UserCredentials, UserRepository } from "./user-repository";
+
+export class UserAlreadyExistsError extends Error {}
+export class LoginFailedError extends Error {}
 
 type Uuid = `${string}-${string}-${string}-${string}`;
-type User = {
-  firstName: string;
-  lastName: string;
-  email: string;
-};
 
 export interface UserServiceInterface {
   create: (userDetails: User) => Promise<User & { uuid: Uuid }>;
+  login: (userCredentials: UserCredentials) => Promise<void>;
 }
 
 class UserService implements UserServiceInterface {
-  #userRepository: InMemoryUserRepository;
-  constructor(userRepository: InMemoryUserRepository) {
-    this.#userRepository = userRepository;
+  private userRepository: UserRepository;
+  constructor(userRepository: UserRepository) {
+    this.userRepository = userRepository;
   }
 
   async create(userDetails: User) {
-    return await this.#userRepository.create(userDetails);
+    if (isEmpty(await this.userRepository.findByEmail(userDetails.email))) {
+      return await this.userRepository.create({
+        ...userDetails,
+        password: await argon2.hash(userDetails.password),
+      });
+    } else {
+      throw new UserAlreadyExistsError("A user with that email already exists");
+    }
+  }
+
+  async login({ email, password }: UserCredentials) {
+    const userDetails = await this.userRepository.findByEmail(email);
+    const isValidPassword = await argon2.verify(
+      userDetails[0].password,
+      password
+    );
+    if (!isValidPassword) {
+      throw new LoginFailedError("Login failed");
+    }
   }
 }
 

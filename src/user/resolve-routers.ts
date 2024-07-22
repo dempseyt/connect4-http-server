@@ -1,10 +1,10 @@
 import { Env } from "@/global";
 import { Router } from "express";
 import InMemoryUserRepository from "./in-memory-user-repository";
-import userRouterFactory from "./user-router-factory";
+import userRouterFactory from "./user-router";
 import UserService from "./user-service";
 
-enum RouterType {
+export enum RouterType {
   "userRouter",
 }
 
