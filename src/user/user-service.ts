@@ -9,7 +9,9 @@ type Uuid = `${string}-${string}-${string}-${string}`;
 
 export interface UserServiceInterface {
   create: (userDetails: User) => Promise<User & { uuid: Uuid }>;
-  authenticate: (userCredentials: UserCredentials) => Promise<void>;
+  authenticate: (
+    userCredentials: UserCredentials
+  ) => Promise<void | { message: string }>;
 }
 
 class UserService implements UserServiceInterface {
@@ -36,7 +38,11 @@ class UserService implements UserServiceInterface {
         userDetails.password,
         password
       );
-      if (!isValidPassword) {
+      if (isValidPassword) {
+        return {
+          message: "Authentication succeeded",
+        };
+      } else {
         throw new AuthenticationFailedError("Authentication failed");
       }
     } else {
