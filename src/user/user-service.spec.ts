@@ -86,6 +86,26 @@ describe("user-service", () => {
           );
         });
       });
+      describe("and valid credentials for that user", () => {
+        it("returns a message indicating the user was authenticated", async () => {
+          const userRepository = new InMemoryUserRepository();
+          const userService = new UserService(userRepository);
+          const userDetails = {
+            firstName: "Benson",
+            lastName: "Bowser",
+            email: "beauty@crikey.com",
+            password: "strongpassword",
+          };
+          await userService.create(userDetails);
+          const userCredentials = {
+            email: "beauty@crikey.com",
+            password: "strongpassword",
+          };
+          expect(userService.authenticate(userCredentials)).resolves.toEqual({
+            message: "Authentication succeeded",
+          });
+        });
+      });
     });
     describe("given an unregistered user", () => {
       describe("when an authentication attempt is made", () => {
