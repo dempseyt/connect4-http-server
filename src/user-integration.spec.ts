@@ -138,6 +138,38 @@ describe("user-integration", () => {
           jest.useRealTimers();
         });
       });
+      describe("and they provide incorrect credentials", () => {
+        it("responds with http status code 403", async () => {
+          const { publicKey: jwtPublicKey, privateKey: jwtPrivateKey } =
+            await generateKeyPair("PS256");
+
+          const userDetails = {
+            firstName: "Dung",
+            lastName: "Eater",
+            email: "dung.eater@hotmail.com",
+            password: "Hello124",
+          };
+          const app = appFactory({
+            routerParameters: {
+              stage: "test",
+              keySet: {
+                jwtPublicKey,
+              },
+            },
+          });
+          await request(app).post("/user/register").send(userDetails);
+          const userCredentials = {
+            userName: "dung.eater@hotmail.com",
+            password: "incorrectpassword",
+          };
+          const response = await request(app)
+            .post("/user/login")
+            .send(userCredentials);
+          expect(response.statusCode).toBe(403);
+          expect(response.body.errors).toEqual(["Login attempt failed."]);
+          expect(response.headers["content-type"]).toMatch(/json/);
+        });
+      });
     });
   });
 });
