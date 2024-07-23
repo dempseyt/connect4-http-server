@@ -1,4 +1,4 @@
-import { Env } from "@/global";
+import { JwtPublicKey, Stage } from "@/global";
 import { Router } from "express";
 import InMemoryUserRepository from "./in-memory-user-repository";
 import userRouterFactory from "./user-router";
@@ -8,14 +8,24 @@ export enum RouterType {
   "userRouter",
 }
 
-const resolveRouters = (env: Env): Record<RouterType, Router> => {
+export type RouterParameters = {
+  stage: Stage;
+  keySet?: {
+    jwtPublicKey: JwtPublicKey;
+  };
+};
+
+const resolveRouters = ({
+  stage,
+  keySet,
+}: RouterParameters): Record<RouterType, Router> => {
   const userRepository =
-    env !== "production"
+    stage !== "production"
       ? new InMemoryUserRepository()
       : new InMemoryUserRepository();
   const userService = new UserService(userRepository);
   return {
-    [RouterType.userRouter]: userRouterFactory(userService),
+    [RouterType.userRouter]: userRouterFactory(userService, keySet),
   };
 };
 

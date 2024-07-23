@@ -1,12 +1,15 @@
-import app from "@/app";
-import jose from "jose";
+import { default as appFactory } from "@/app";
+import { generateKeyPair, jwtDecrypt } from "jose";
 import { last, path, pipe, split } from "ramda";
-import request from "supertest";
+import request, { Response } from "supertest";
 
 describe("user-integration", () => {
   describe("register", () => {
     describe("given the user does not exist", () => {
       it("creates a user", async () => {
+        const app = appFactory({
+          routerParameters: { stage: "test" },
+        });
         const response = await request(app).post("/user/register").send({
           firstName: "John",
           lastName: "Doe",
@@ -28,6 +31,7 @@ describe("user-integration", () => {
     });
     describe("given a user already exists with a given email", () => {
       it("forbids the creation of another user with that email", async () => {
+        const app = appFactory({ routerParameters: { stage: "test" } });
         await request(app).post("/user/register").send({
           firstName: "John",
           lastName: "Doe",
@@ -49,6 +53,7 @@ describe("user-integration", () => {
     });
     describe("given invalid user details", () => {
       it("forbids creation of user", async () => {
+        const app = appFactory({ routerParameters: { stage: "test" } });
         const response = await request(app).post("/user/register").send({
           firstName: "Dempsey",
           email: "dsons@gmux.com",
@@ -69,17 +74,31 @@ describe("user-integration", () => {
     });
   });
   describe("login", () => {
-    describe("given a use already exists", () => {
+    describe("given a user already exists", () => {
       describe("and they provide the correct credentials", () => {
-        it.skip("they are provided with a session token", async () => {
-          const date = Date.now();
-          jest.setSystemTime(date);
+        it("they are provided with a session token", async () => {
+          jest.useFakeTimers({
+            doNotFake: ["setImmediate"],
+          });
+          const dateTimestampInMilliSeconds = Date.now();
+          jest.setSystemTime(dateTimestampInMilliSeconds);
+          const { publicKey: jwtPublicKey, privateKey: jwtPrivateKey } =
+            await generateKeyPair("PS256");
+
           const userDetails = {
             firstName: "Dung",
             lastName: "Eater",
             email: "dung.eater@gmail.com",
             password: "iamthedungeater",
           };
+          const app = appFactory({
+            routerParameters: {
+              stage: "test",
+              keySet: {
+                jwtPublicKey,
+              },
+            },
+          });
           await request(app).post("/user/register").send(userDetails);
           const userCredentials = {
             userName: "dung.eater@gmail.com",
@@ -94,28 +113,29 @@ describe("user-integration", () => {
             split(" "),
             last
           )(loginResponse);
-
-          const publicKey = new Uint8Array(
-            Buffer.from(process.env.JWT_PUBLIC_KEY)
-          );
-          const { protectedHeader, payload } = await jose.jwtVerify(
+          const { protectedHeader, payload } = await jwtDecrypt(
             jwt,
-            publicKey
+            jwtPrivateKey
           );
           expect(protectedHeader).toEqual({
-            alg: "RS256",
+            alg: "RSA-OAEP-256",
             typ: "JWT",
+            enc: "A256GCM",
           });
-          const durationOfDayInMilliseconds = 24 * 60 * 60 * 1000;
+          const durationOfDayInSeconds = 24 * 60 * 60;
+          const dateTimestampInSeconds = Math.trunc(
+            dateTimestampInMilliSeconds / 1000
+          );
           expect(payload).toEqual({
-            iss: "connect4-http-gameserver",
-            iat: date,
-            exp: date + durationOfDayInMilliseconds,
+            iss: "connect4-http-server",
+            iat: dateTimestampInSeconds,
+            exp: dateTimestampInSeconds + durationOfDayInSeconds,
             sub: "dung.eater@gmail.com",
-            nbf: date,
+            nbf: dateTimestampInSeconds,
             username: "dung.eater@gmail.com",
             roles: [],
           });
+          jest.useRealTimers();
         });
       });
     });
