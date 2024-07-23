@@ -13,24 +13,37 @@ const loginRequestHandlerFactory =
     // authenticate the request
     // issue a token
     // send the token with the response
-    const email = req.body.userName;
-    const jwt = await new EncryptJWT({
-      username: email,
-      roles: [],
-    })
-      .setProtectedHeader({
-        alg: "RSA-OAEP-256",
-        typ: "JWT",
-        enc: "A256GCM",
+    const isAuthenticated = await Promise.resolve(
+      userService.authenticate({
+        email: req.body.userName,
+        password: req.body.password,
       })
-      .setIssuer("connect4-http-server")
-      .setIssuedAt()
-      .setExpirationTime("1 day from now")
-      .setNotBefore("0 sec from now")
-      .setSubject(email)
-      .encrypt(jwtPublicKey);
-    res.appendHeader("authorization", jwt).send();
-    next();
+    )
+      .then(() => true)
+      .catch(() => false);
+
+    if (isAuthenticated) {
+      const email = req.body.userName;
+      const jwt = await new EncryptJWT({
+        username: email,
+        roles: [],
+      })
+        .setProtectedHeader({
+          alg: "RSA-OAEP-256",
+          typ: "JWT",
+          enc: "A256GCM",
+        })
+        .setIssuer("connect4-http-server")
+        .setIssuedAt()
+        .setExpirationTime("1 day from now")
+        .setNotBefore("0 sec from now")
+        .setSubject(email)
+        .encrypt(jwtPublicKey);
+      res.appendHeader("authorization", jwt).send();
+      next();
+    } else {
+      res.status(403).send({ errors: ["Login attempt failed."] });
+    }
   };
 
 const registerRequestHandlerFactory =
