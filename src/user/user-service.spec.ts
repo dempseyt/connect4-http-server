@@ -123,4 +123,16 @@ describe("user-service", () => {
       });
     });
   });
+  describe("retrieve user details", () => {
+    describe("given the email for a user does not exist", () => {
+      it('throws a "NoSuchUser" error', () => {
+        const userRepository = new InMemoryUserRepository();
+        const userService = new UserService(userRepository);
+        const userEmail = "johndoe@hotmail.com";
+        expect(userService.getUserDetails(userEmail)).rejects.toThrow(
+          new NoSuchError("User does not exist")
+        );
+      });
+    });
+  });
 });
