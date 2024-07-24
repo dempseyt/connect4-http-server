@@ -66,6 +66,12 @@ class UserService implements UserServiceInterface {
     if (persistedUser === undefined) {
       throw new NoSuchUserError("User does not exist");
     }
+    const { firstName, lastName, email } = persistedUser;
+    return {
+      firstName,
+      lastName,
+      email,
+    };
   }
 }
 

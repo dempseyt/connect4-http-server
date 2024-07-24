@@ -137,14 +137,14 @@ describe("user-service", () => {
     });
     describe("given the email for a registered user", () => {
       it("returns the user's details", async () => {
+        const userRepository = new InMemoryUserRepository();
+        const userService = new UserService(userRepository);
         const UserRegisterDetails = {
           firstName: "Rami",
           lastName: "Beasley-Grad",
           email: "zoofy@hotmail.com",
           password: "khaicss",
         };
-        const userRepository = new InMemoryUserRepository();
-        const userService = new UserService(userRepository);
         await userService.create(UserRegisterDetails);
 
         expect(
