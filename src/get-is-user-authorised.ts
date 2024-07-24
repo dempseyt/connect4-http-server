@@ -1,13 +1,11 @@
-import { jwtDecrypt, KeyLike } from "jose";
-import { JWEInvalid } from "jose/errors";
+import { jwtDecrypt, jwtVerify, KeyLike } from "jose";
 
 const getIsUserAuthorised = async (token: string, privateKey: KeyLike) => {
   try {
     await jwtDecrypt(token, privateKey);
+    await jwtVerify(token, privateKey);
   } catch (err) {
-    if (err instanceof JWEInvalid) {
-      return false;
-    }
+    return false;
   }
 };
 

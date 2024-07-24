@@ -14,7 +14,7 @@ describe("get-is-user-authorised", () => {
       it("returns false", async () => {
         const { privateKey, publicKey } = await generateKeyPair("RS256");
         const token = await new EncryptJWT()
-          .setProtectedHeader({ alg: "RSA-OAEP-256", enc: "A128CBC-Hs256" })
+          .setProtectedHeader({ alg: "RSA-OAEP-256", enc: "A128CBC-HS256" })
           .setExpirationTime("1 day ago")
           .encrypt(publicKey);
         expect(getIsUserAuthorised(token, privateKey)).resolves.toBe(false);
