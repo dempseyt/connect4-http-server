@@ -4,15 +4,20 @@ import express, { RequestHandler } from "express";
 import { EncryptJWT } from "jose";
 import { UserServiceInterface } from "./user-service";
 
+const userDetailsRequestHandlerFactory =
+  (userService: UserServiceInterface): RequestHandler =>
+  (req, res, next) => {
+    res
+      .status(401)
+      .send({ errors: ["You must be logged in to view your user details"] });
+  };
+
 const loginRequestHandlerFactory =
   (
     userService: UserServiceInterface,
     jwtPublicKey?: JwtPublicKey
   ): RequestHandler =>
   async (req, res, next) => {
-    // authenticate the request
-    // issue a token
-    // send the token with the response
     const isAuthenticated = await Promise.resolve(
       userService.authenticate({
         email: req.body.userName,
@@ -69,6 +74,7 @@ const userRouterFactory = (
 ) => {
   const userRouter = express.Router();
 
+  userRouter.get("/", userDetailsRequestHandlerFactory(userService));
   userRouter.post("/register", registerRequestHandlerFactory(userService));
   userRouter.post(
     "/login",
