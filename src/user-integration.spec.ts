@@ -210,5 +210,20 @@ describe("user-integration", () => {
         });
       });
     });
+    describe("given a user provided with an authorisation token", () => {
+      describe("and their token is invalid", () => {
+        it("responds with http status code 401", async () => {
+          const app = appFactory({ routerParameters: { stage: "test" } });
+          const response = await request(app)
+            .get("/user")
+            .set("Authorization", "blahblah")
+            .send();
+          expect(response.statusCode).toBe(401);
+          expect(response.body.errors).toEqual([
+            "You must be logged in to view your user details",
+          ]);
+        });
+      });
+    });
   });
 });
