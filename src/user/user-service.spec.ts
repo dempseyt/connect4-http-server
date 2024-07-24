@@ -2,6 +2,7 @@ import argon2 from "argon2";
 import InMemoryUserRepository from "./in-memory-user-repository";
 import UserService, {
   AuthenticationFailedError,
+  NoSuchUserError,
   UserAlreadyExistsError,
 } from "./user-service";
 
@@ -130,7 +131,7 @@ describe("user-service", () => {
         const userService = new UserService(userRepository);
         const userEmail = "johndoe@hotmail.com";
         expect(userService.getUserDetails(userEmail)).rejects.toThrow(
-          new NoSuchError("User does not exist")
+          new NoSuchUserError("User does not exist")
         );
       });
     });
