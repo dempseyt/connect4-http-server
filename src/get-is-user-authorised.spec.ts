@@ -7,7 +7,9 @@ describe("get-is-user-authorised", () => {
       it("returns false", async () => {
         const { privateKey } = await generateKeyPair("RS256");
         const token = "fgojkhuiogutgh";
-        expect(getIsUserAuthorised(token, privateKey)).resolves.toBe(false);
+        expect(
+          getIsUserAuthorised(token, privateKey, "email@email.com")
+        ).resolves.toBe(false);
       });
     });
     describe("which is expired", () => {
@@ -17,7 +19,23 @@ describe("get-is-user-authorised", () => {
           .setProtectedHeader({ alg: "RSA-OAEP-256", enc: "A128CBC-HS256" })
           .setExpirationTime("1 day ago")
           .encrypt(publicKey);
-        expect(getIsUserAuthorised(token, privateKey)).resolves.toBe(false);
+        expect(
+          getIsUserAuthorised(token, privateKey, "email@email.com")
+        ).resolves.toBe(false);
+      });
+    });
+    describe("which was not issued for the user", () => {
+      it("returns false", async () => {
+        const { privateKey, publicKey } = await generateKeyPair("RS256");
+        const token = await new EncryptJWT({
+          userName: "notemail@notemail.com",
+        })
+          .setProtectedHeader({ alg: "RSA-OAEP-256", enc: "A128CBC-HS256" })
+          .setExpirationTime("1 day ago")
+          .encrypt(publicKey);
+        expect(
+          getIsUserAuthorised(token, privateKey, "email@email.com")
+        ).resolves.toBe(false);
       });
     });
   });

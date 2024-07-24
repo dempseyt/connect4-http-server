@@ -1,6 +1,10 @@
 import { jwtDecrypt, jwtVerify, KeyLike } from "jose";
 
-const getIsUserAuthorised = async (token: string, privateKey: KeyLike) => {
+const getIsUserAuthorised = async (
+  token: string,
+  privateKey: KeyLike,
+  email: string
+) => {
   try {
     await jwtDecrypt(token, privateKey);
     await jwtVerify(token, privateKey);
