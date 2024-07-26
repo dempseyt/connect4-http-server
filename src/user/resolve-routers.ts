@@ -1,4 +1,4 @@
-import { JwtPublicKey, Stage } from "@/global";
+import { JwtPrivateKey, JwtPublicKey, Stage } from "@/global";
 import { Router } from "express";
 import InMemoryUserRepository from "./in-memory-user-repository";
 import userRouterFactory from "./user-router";
@@ -12,6 +12,7 @@ export type RouterParameters = {
   stage: Stage;
   keySet?: {
     jwtPublicKey: JwtPublicKey;
+    jwtPrivateKey: JwtPrivateKey;
   };
 };
 

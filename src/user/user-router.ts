@@ -1,15 +1,31 @@
+import getIsUserAuthorised from "@/get-is-user-authorised";
 import { JwtPublicKey, KeySet } from "@/global";
 import validateUserRegisterRequestBody from "@/validate-user-register-request-body";
 import express, { RequestHandler } from "express";
-import { EncryptJWT } from "jose";
+import { EncryptJWT, KeyLike } from "jose";
 import { UserServiceInterface } from "./user-service";
 
 const userDetailsRequestHandlerFactory =
-  (userService: UserServiceInterface): RequestHandler =>
-  (req, res, next) => {
-    res
-      .status(401)
-      .send({ errors: ["You must be logged in to view your user details"] });
+  (userService: UserServiceInterface, privateKey: KeyLike): RequestHandler =>
+  async (req, res, next) => {
+    const { email } = req.body;
+    const authorisationToken = req.headers.authorisation as string;
+
+    const isAuthorised = await getIsUserAuthorised(
+      authorisationToken,
+      privateKey,
+      email
+    );
+
+    if (isAuthorised) {
+      const userDetails = await userService.getUserDetails(email);
+      res.status(200).send(userDetails);
+    } else {
+      res
+        .status(401)
+        .send({ errors: ["You must be logged in to view your user details"] });
+    }
+    next();
   };
 
 const loginRequestHandlerFactory =
@@ -44,7 +60,7 @@ const loginRequestHandlerFactory =
         .setNotBefore("0 sec from now")
         .setSubject(email)
         .encrypt(jwtPublicKey);
-      res.appendHeader("authorization", jwt).send();
+      res.appendHeader("authorisation", jwt).send();
       next();
     } else {
       res.status(403).send({ errors: ["Login attempt failed."] });
@@ -74,7 +90,10 @@ const userRouterFactory = (
 ) => {
   const userRouter = express.Router();
 
-  userRouter.get("/", userDetailsRequestHandlerFactory(userService));
+  userRouter.get(
+    "/",
+    userDetailsRequestHandlerFactory(userService, keySet.jwtPrivateKey)
+  );
   userRouter.post("/register", registerRequestHandlerFactory(userService));
   userRouter.post(
     "/login",
