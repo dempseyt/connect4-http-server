@@ -1,8 +1,7 @@
-import { UserRegisterRequestBody } from "@/user/user-router";
+import { UserRegisterRequest } from "@/user/user-router-types";
 import { ValidationResult } from "@/validation";
 import Joi, { ValidationErrorItem } from "joi";
 import { applySpec, join, map, path, pipe, prop } from "ramda";
-
 const schema = Joi.object({
   firstName: Joi.string().min(1).required(),
   lastName: Joi.string().min(1).required(),
@@ -11,7 +10,7 @@ const schema = Joi.object({
 });
 
 function validateUserRegisterRequestBody(
-  userRegisterRequestBody: UserRegisterRequestBody
+  userRegisterRequestBody: UserRegisterRequest
 ): ValidationResult {
   const validationResult = schema.validate(userRegisterRequestBody, {
     abortEarly: false,

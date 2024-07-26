@@ -1,4 +1,9 @@
-import { PersistedUser, User, UserRepository, Uuid } from "./user-repository";
+import {
+  PersistedUser,
+  UserRegisterDetails,
+  UserRepository,
+  Uuid,
+} from "./user-repository";
 
 export default class InMemoryUserRepository implements UserRepository {
   private users: Map<Uuid, PersistedUser>;
@@ -6,7 +11,7 @@ export default class InMemoryUserRepository implements UserRepository {
     this.users = new Map();
   }
 
-  async create(user: User): Promise<PersistedUser> {
+  async create(user: UserRegisterDetails): Promise<PersistedUser> {
     const userUuid = crypto.randomUUID();
     await this.users.set(userUuid, { ...user, uuid: userUuid });
     return Promise.resolve({ ...user, uuid: userUuid });
