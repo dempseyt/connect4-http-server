@@ -7,8 +7,15 @@ describe("user-integration", () => {
   describe("register", () => {
     describe("given the user does not exist", () => {
       it("creates a user", async () => {
+        const { publicKey, privateKey } = await generateKeyPair("RS256");
         const app = appFactory({
-          routerParameters: { stage: "test" },
+          routerParameters: {
+            stage: "test",
+            keySet: {
+              jwtPrivateKey: privateKey,
+              jwtPublicKey: publicKey,
+            },
+          },
         });
         const response = await request(app).post("/user/register").send({
           firstName: "John",
@@ -31,7 +38,16 @@ describe("user-integration", () => {
     });
     describe("given a user already exists with a given email", () => {
       it("forbids the creation of another user with that email", async () => {
-        const app = appFactory({ routerParameters: { stage: "test" } });
+        const { publicKey, privateKey } = await generateKeyPair("RS256");
+        const app = appFactory({
+          routerParameters: {
+            stage: "test",
+            keySet: {
+              jwtPrivateKey: privateKey,
+              jwtPublicKey: publicKey,
+            },
+          },
+        });
         await request(app).post("/user/register").send({
           firstName: "John",
           lastName: "Doe",
@@ -53,7 +69,16 @@ describe("user-integration", () => {
     });
     describe("given invalid user details", () => {
       it("forbids creation of user", async () => {
-        const app = appFactory({ routerParameters: { stage: "test" } });
+        const { publicKey, privateKey } = await generateKeyPair("RS256");
+        const app = appFactory({
+          routerParameters: {
+            stage: "test",
+            keySet: {
+              jwtPrivateKey: privateKey,
+              jwtPublicKey: publicKey,
+            },
+          },
+        });
         const response = await request(app).post("/user/register").send({
           firstName: "Dempsey",
           email: "dsons@gmux.com",
@@ -96,6 +121,7 @@ describe("user-integration", () => {
               stage: "test",
               keySet: {
                 jwtPublicKey,
+                jwtPrivateKey,
               },
             },
           });
@@ -109,10 +135,11 @@ describe("user-integration", () => {
             .send(userCredentials);
 
           const jwt = pipe<[Response], string, Array<string>, string>(
-            path(["header", "authorization"]),
+            path(["header", "authorisation"]),
             split(" "),
             last
           )(loginResponse);
+
           const { protectedHeader, payload } = await jwtDecrypt(
             jwt,
             jwtPrivateKey
@@ -201,7 +228,16 @@ describe("user-integration", () => {
     describe("given the user does not provide an authorisation token", () => {
       describe("when they attempt to view their user details", () => {
         it("responds with http status code 401", async () => {
-          const app = appFactory({ routerParameters: { stage: "test" } });
+          const { publicKey, privateKey } = await generateKeyPair("RS256");
+          const app = appFactory({
+            routerParameters: {
+              stage: "test",
+              keySet: {
+                jwtPrivateKey: privateKey,
+                jwtPublicKey: publicKey,
+              },
+            },
+          });
           const response = await request(app).get("/user").send();
           expect(response.statusCode).toBe(401);
           expect(response.body.errors).toEqual([
@@ -213,15 +249,115 @@ describe("user-integration", () => {
     describe("given a user provided with an authorisation token", () => {
       describe("and their token is invalid", () => {
         it("responds with http status code 401", async () => {
-          const app = appFactory({ routerParameters: { stage: "test" } });
+          const { publicKey, privateKey } = await generateKeyPair("RS256");
+          const app = appFactory({
+            routerParameters: {
+              stage: "test",
+              keySet: {
+                jwtPrivateKey: privateKey,
+                jwtPublicKey: publicKey,
+              },
+            },
+          });
           const response = await request(app)
             .get("/user")
-            .set("Authorization", "blahblah")
-            .send();
+            .set("authorisation", "blahblah")
+            .send({
+              email: "email@email.com",
+            });
           expect(response.statusCode).toBe(401);
           expect(response.body.errors).toEqual([
             "You must be logged in to view your user details",
           ]);
+        });
+      });
+      describe("and the token is expired", () => {
+        it("responds with http status code 401", async () => {
+          jest.useFakeTimers({
+            doNotFake: ["setImmediate"],
+          });
+          const { publicKey, privateKey } = await generateKeyPair("RS256");
+          const app = appFactory({
+            routerParameters: {
+              stage: "test",
+              keySet: {
+                jwtPrivateKey: privateKey,
+                jwtPublicKey: publicKey,
+              },
+            },
+          });
+          const userDetails = {
+            firstName: "John",
+            lastName: "Doe",
+            email: "johndoe@hotmail.com",
+            password: "password",
+          };
+          await request(app).post("/user/register").send(userDetails);
+          const userCredentials = {
+            userName: "johndoe@hotmail.com",
+            password: "password",
+          };
+          const loginResponse = await request(app)
+            .post("/user/login")
+            .send(userCredentials);
+          const authorisationHeaderField = loginResponse.header.authorisation;
+
+          jest.setSystemTime(20000);
+
+          const response = await request(app)
+            .get("/user")
+            .set("authorisation", authorisationHeaderField)
+            .send({
+              email: "johndoe@hotmail.com",
+            });
+          expect(response.statusCode).toBe(401);
+          expect(response.body.errors).toEqual([
+            "You must be logged in to view your user details",
+          ]);
+          jest.useRealTimers();
+        });
+      });
+      describe("and their token is valid", () => {
+        it("responds with the user's details", async () => {
+          const { publicKey, privateKey } = await generateKeyPair("RS256");
+          const app = appFactory({
+            routerParameters: {
+              stage: "test",
+              keySet: {
+                jwtPrivateKey: privateKey,
+                jwtPublicKey: publicKey,
+              },
+            },
+          });
+          const userDetails = {
+            firstName: "John",
+            lastName: "Doe",
+            email: "johndoe@hotmail.com",
+            password: "password",
+          };
+          await request(app).post("/user/register").send(userDetails);
+          const userCredentials = {
+            userName: "johndoe@hotmail.com",
+            password: "password",
+          };
+          const loginResponse = await request(app)
+            .post("/user/login")
+            .send(userCredentials);
+          const authorisationHeaderField = loginResponse.header.authorisation;
+
+          const response = await request(app)
+            .get("/user")
+            .set("authorisation", authorisationHeaderField)
+            .send({
+              email: "johndoe@hotmail.com",
+            });
+
+          expect(response.statusCode).toBe(200);
+          expect(response.body).toEqual({
+            firstName: "John",
+            lastName: "Doe",
+            email: "johndoe@hotmail.com",
+          });
         });
       });
     });

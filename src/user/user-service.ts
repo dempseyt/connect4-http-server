@@ -62,6 +62,7 @@ class UserService implements UserServiceInterface {
   async getUserDetails(userEmail: string) {
     const persistedUsersWithProvidedEmail =
       await this.userRepository.findByEmail(userEmail);
+
     const persistedUser = persistedUsersWithProvidedEmail[0];
     if (persistedUser === undefined) {
       throw new NoSuchUserError("User does not exist");
