@@ -1,6 +1,8 @@
 export interface UserRepository {
-  create: (user: User) => Promise<PersistedUser>;
-  findByEmail: (email: string) => Promise<Array<User & { uuid: Uuid }>>;
+  create: (user: UserRegisterDetails) => Promise<PersistedUser>;
+  findByEmail: (
+    email: string
+  ) => Promise<Array<UserRegisterDetails & { uuid: Uuid }>>;
 }
 
 export type UserCredentials = {
@@ -10,7 +12,13 @@ export type UserCredentials = {
 
 export type Uuid = `${string}-${string}-${string}-${string}`;
 
-export type User = {
+export type UserDetails = {
+  firstName: string;
+  lastName: string;
+  email: string;
+};
+
+export type UserRegisterDetails = {
   firstName: string;
   lastName: string;
   email: string;

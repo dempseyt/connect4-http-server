@@ -1,4 +1,4 @@
-export type UserRegisterRequestBody = {
+export type UserRegisterRequest = {
   firstName: string;
   lastName: string;
   email: string;
