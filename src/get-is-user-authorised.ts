@@ -1,4 +1,4 @@
-import { jwtDecrypt, jwtVerify, KeyLike } from "jose";
+import { jwtDecrypt, KeyLike } from "jose";
 
 const getIsUserAuthorised = async (
   token: string,
@@ -6,8 +6,8 @@ const getIsUserAuthorised = async (
   email: string
 ) => {
   try {
-    await jwtDecrypt(token, privateKey);
-    await jwtVerify(token, privateKey);
+    const { payload } = await jwtDecrypt(token, privateKey);
+    return payload.username === email;
   } catch (err) {
     return false;
   }

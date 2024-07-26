@@ -28,7 +28,7 @@ describe("get-is-user-authorised", () => {
       it("returns false", async () => {
         const { privateKey, publicKey } = await generateKeyPair("RS256");
         const token = await new EncryptJWT({
-          userName: "notemail@notemail.com",
+          username: "notemail@notemail.com",
         })
           .setProtectedHeader({ alg: "RSA-OAEP-256", enc: "A128CBC-HS256" })
           .setExpirationTime("1 day ago")
@@ -36,6 +36,19 @@ describe("get-is-user-authorised", () => {
         expect(
           getIsUserAuthorised(token, privateKey, "email@email.com")
         ).resolves.toBe(false);
+      });
+    });
+    describe("which is valid for the user", () => {
+      it("returns true", async () => {
+        const { privateKey, publicKey } = await generateKeyPair("RS256");
+        const token = await new EncryptJWT({
+          username: "email@email.com",
+        })
+          .setProtectedHeader({ alg: "RSA-OAEP-256", enc: "A128CBC-HS256" })
+          .encrypt(publicKey);
+        expect(
+          getIsUserAuthorised(token, privateKey, "email@email.com")
+        ).resolves.toBe(true);
       });
     });
   });
