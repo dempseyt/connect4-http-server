@@ -1,6 +1,5 @@
 import getIsUserAuthorised from "@/get-is-user-authorised";
 import { JwtPublicKey, KeySet } from "@/global";
-import validateUserRegisterRequestBody from "@/validate-user-register-request-body";
 import express, { RequestHandler } from "express";
 import { EncryptJWT, KeyLike } from "jose";
 import { UserServiceInterface } from "./user-service";
@@ -70,10 +69,6 @@ const loginRequestHandlerFactory =
 const registerRequestHandlerFactory =
   (userService: UserServiceInterface): RequestHandler =>
   (req, res, next) => {
-    const { isValid, errors } = validateUserRegisterRequestBody(req.body);
-    if (!isValid) {
-      res.status(403).send({ errors });
-    }
     const { firstName, lastName, email, password } = req.body;
     userService
       .create({ firstName, lastName, email, password })

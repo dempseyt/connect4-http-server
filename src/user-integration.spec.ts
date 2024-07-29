@@ -181,6 +181,7 @@ describe("user-integration", () => {
               stage: "test",
               keySet: {
                 jwtPublicKey,
+                jwtPrivateKey,
               },
             },
           });
@@ -208,6 +209,7 @@ describe("user-integration", () => {
             stage: "test",
             keySet: {
               jwtPublicKey,
+              jwtPrivateKey,
             },
           },
         });
