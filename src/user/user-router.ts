@@ -1,23 +1,13 @@
-import getIsUserAuthorised from "@/get-is-user-authorised";
 import { JwtPublicKey, KeySet } from "@/global";
 import express, { RequestHandler } from "express";
-import { EncryptJWT, KeyLike } from "jose";
+import { EncryptJWT } from "jose";
 import { UserServiceInterface } from "./user-service";
 
 const userDetailsRequestHandlerFactory =
-  (userService: UserServiceInterface, privateKey: KeyLike): RequestHandler =>
+  (userService: UserServiceInterface): RequestHandler =>
   async (req, res, next) => {
-    const { email } = req.body;
-    const authorisationToken = req.headers.authorisation as string;
-
-    const isAuthorised = await getIsUserAuthorised(
-      authorisationToken,
-      privateKey,
-      email
-    );
-
-    if (isAuthorised) {
-      const userDetails = await userService.getUserDetails(email);
+    if (res.locals.isAuthorised) {
+      const userDetails = await userService.getUserDetails(res.locals.user);
       res.status(200).send(userDetails);
     } else {
       res
@@ -85,10 +75,7 @@ const userRouterFactory = (
 ) => {
   const userRouter = express.Router();
 
-  userRouter.get(
-    "/",
-    userDetailsRequestHandlerFactory(userService, keySet.jwtPrivateKey)
-  );
+  userRouter.get("/", userDetailsRequestHandlerFactory(userService));
   userRouter.post("/register", registerRequestHandlerFactory(userService));
   userRouter.post(
     "/login",
