@@ -19,6 +19,22 @@ describe("invite-integration", () => {
     });
   });
 
+  describe("given the inviter is not logged in", () => {
+    describe("when the inviter sends an invitation", () => {
+      it("returns http status code 401", async () => {
+        const inviteDetails = {
+          inviter: "john@mail.com",
+          invitee: "gerald@mail.com",
+        };
+        const response = await request(app).post("/invite").send(inviteDetails);
+        expect(response.statusCode).toBe(401);
+        expect(response.body.errors).toEqual([
+          "You must be logged in to send an invite.",
+        ]);
+      });
+    });
+  });
+
   describe("given an inviter that is an existing user", () => {
     describe("and an invitee that is an existing user", () => {
       describe("when the inviter sends an invite to the invitee", () => {
