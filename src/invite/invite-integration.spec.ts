@@ -3,6 +3,22 @@ import request from "supertest";
 import appFactory from "../app";
 
 describe("invite-integration", () => {
+  let app;
+  let jwtKeyPair;
+
+  beforeAll(async () => {
+    jwtKeyPair = await generateKeyPair("RS256");
+  });
+
+  beforeEach(async () => {
+    app = appFactory({
+      routerParameters: {
+        stage: "test",
+        keySet: jwtKeyPair,
+      },
+    });
+  });
+
   describe("given an inviter that is an existing user", () => {
     describe("and an invitee that is an existing user", () => {
       describe("when the inviter sends an invite to the invitee", () => {
@@ -10,12 +26,7 @@ describe("invite-integration", () => {
           jest.useFakeTimers({ doNotFake: ["setImmediate"] });
           const currentTime = Date.now();
           jest.setSystemTime(currentTime);
-          const app = appFactory({
-            routerParameters: {
-              stage: "test",
-              keySet: await generateKeyPair("RS256"),
-            },
-          });
+
           const inviterUserDetails = {
             firstName: "John",
             lastName: "Berry",
@@ -37,16 +48,19 @@ describe("invite-integration", () => {
           await request(app).post("/login").send(inviterUserCredentials);
 
           const response = await request(app).post("/invite").send({
-            invitee: "player2@mail.com",
+            inviter: "john@mail.com",
+            invitee: "gerald@mail.com",
           });
           const lengthOfDayInMilliseconds = 1000 * 60 * 60 * 24;
           expect(response.statusCode).toBe(201);
           expect(response.body.invite).toEqual({
+            // @ts-ignore
             uuid: expect.toBeUuid(),
             inviter: "john@mail.com",
             invitee: "gerald@mail.com",
             exp: currentTime + lengthOfDayInMilliseconds,
           });
+          jest.useRealTimers();
         });
       });
     });
