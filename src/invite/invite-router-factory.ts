@@ -8,7 +8,7 @@ const authorisationMiddleware: RequestHandler = (req, res, next) =>
         errors: ["You must be logged in to send an invite"],
       });
 
-const createInviteRequestHandlerFactory =
+const createCreateInviteRequestHandlerFactory =
   (inviteService: InviteService): RequestHandler =>
   (req, res, next) => {
     const { invitee, inviter } = req.body;
@@ -24,10 +24,28 @@ const createInviteRequestHandlerFactory =
     next();
   };
 
+const createInviteAuthorisationMiddleware: RequestHandler = (
+  req,
+  res,
+  next
+) => {
+  const { inviter } = req.body;
+  if (inviter === res.locals.claims.email) {
+    next();
+  }
+  res.status(401).send({
+    errors: ["You can not send an invite as another user"],
+  });
+};
+
 const inviteRouterFactory = (inviteService: InviteService) => {
   const inviteRouter = express.Router();
   inviteRouter.use(authorisationMiddleware);
-  inviteRouter.post("/", createInviteRequestHandlerFactory(inviteService));
+  inviteRouter.post(
+    "/",
+    createInviteAuthorisationMiddleware,
+    createCreateInviteRequestHandlerFactory(inviteService)
+  );
   return inviteRouter;
 };
 
