@@ -14,7 +14,7 @@ export enum RouterType {
 
 export type RouterParameters = {
   stage: Stage;
-  keySet?: {
+  keySet: {
     jwtPublicKey: JwtPublicKey;
     jwtPrivateKey: JwtPrivateKey;
   };

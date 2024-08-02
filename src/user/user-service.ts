@@ -19,7 +19,7 @@ export interface UserServiceInterface {
   ) => Promise<UserRegisterDetails & { uuid: Uuid }>;
   authenticate: (
     userCredentials: UserCredentials
-  ) => Promise<void | { message: string }>;
+  ) => Promise<{ message: string }>;
   getUserDetails: (userEmail: string) => Promise<UserDetails | void>;
 }
 

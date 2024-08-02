@@ -33,7 +33,7 @@ const createInviteAuthorisationMiddleware: RequestHandler = (
   if (inviter === res.locals.claims.email) {
     next();
   }
-  res.status(401).send({
+  res.status(403).send({
     errors: ["You can not send an invite as another user"],
   });
 };
