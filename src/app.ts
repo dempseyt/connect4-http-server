@@ -1,6 +1,6 @@
 import resolveRouters, { RouterParameters } from "@/resolve-routers";
-import express from "express";
-import getIsUserAuthorised from "./get-is-user-authorised";
+import express, { RequestHandler } from "express";
+import { jwtDecrypt } from "jose";
 import { JwtPrivateKey } from "./global";
 import validateUserRegisterRequest from "./validate-user-register-request";
 
@@ -8,17 +8,21 @@ type AppParameters = {
   routerParameters: RouterParameters;
 };
 
-const createAuthorisationMiddleware =
-  (privateKey: JwtPrivateKey) => async (req, res, next) => {
-    const token = req.headers.authorisation;
-    const { email } = req.body;
+const createAuthenticationMiddleware =
+  (privateKey: JwtPrivateKey): RequestHandler =>
+  async (req, res, next) => {
+    const authorizationField = req.headers.authorization;
 
-    res.locals.user = email;
-    res.locals.isAuthorised = await getIsUserAuthorised(
-      token,
-      privateKey,
-      email
-    );
+    if (authorizationField) {
+      try {
+        const { payload } = await jwtDecrypt(
+          authorizationField.split(" ")[1],
+          privateKey
+        );
+
+        res.locals.claims = { email: payload.username };
+      } catch (error) {}
+    }
 
     next();
   };
@@ -29,7 +33,7 @@ const appFactory = (appParameters: AppParameters) => {
   const { userRouter, inviteRouter } = resolveRouters(routerParameters);
   const app = express();
   app.use(express.json());
-  app.use(createAuthorisationMiddleware(privateKey));
+  app.use(createAuthenticationMiddleware(privateKey));
   app.use("/user", validateUserRegisterRequest, userRouter);
   app.use("/invite", inviteRouter);
 
