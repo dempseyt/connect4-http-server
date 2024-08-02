@@ -6,8 +6,10 @@ import { UserServiceInterface } from "./user-service";
 const userDetailsRequestHandlerFactory =
   (userService: UserServiceInterface): RequestHandler =>
   async (req, res, next) => {
-    if (res.locals.isAuthorised) {
-      const userDetails = await userService.getUserDetails(res.locals.user);
+    if (res.locals.claims?.email) {
+      const userDetails = await userService.getUserDetails(
+        res.locals.claims.email
+      );
       res.status(200).send(userDetails);
     } else {
       res
@@ -20,19 +22,14 @@ const userDetailsRequestHandlerFactory =
 const loginRequestHandlerFactory =
   (
     userService: UserServiceInterface,
-    jwtPublicKey?: JwtPublicKey
+    jwtPublicKey: JwtPublicKey
   ): RequestHandler =>
   async (req, res, next) => {
-    const isAuthenticated = await Promise.resolve(
-      userService.authenticate({
+    try {
+      await userService.authenticate({
         email: req.body.userName,
         password: req.body.password,
-      })
-    )
-      .then(() => true)
-      .catch(() => false);
-
-    if (isAuthenticated) {
+      });
       const email = req.body.userName;
       const jwt = await new EncryptJWT({
         username: email,
@@ -49,11 +46,11 @@ const loginRequestHandlerFactory =
         .setNotBefore("0 sec from now")
         .setSubject(email)
         .encrypt(jwtPublicKey);
-      res.appendHeader("authorisation", jwt).send();
-      next();
-    } else {
+      res.setHeader("Authorization", `Basic ${jwt}`).send();
+    } catch (error) {
       res.status(403).send({ errors: ["Login attempt failed."] });
     }
+    next();
   };
 
 const registerRequestHandlerFactory =
@@ -79,7 +76,7 @@ const userRouterFactory = (
   userRouter.post("/register", registerRequestHandlerFactory(userService));
   userRouter.post(
     "/login",
-    loginRequestHandlerFactory(userService, keySet?.jwtPublicKey)
+    loginRequestHandlerFactory(userService, keySet.jwtPublicKey)
   );
 
   return userRouter;
