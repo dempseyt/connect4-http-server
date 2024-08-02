@@ -126,7 +126,7 @@ describe("invite-integration", () => {
             .post("/invite")
             .set("Authorization", loginResponse.headers.authorization)
             .send(inviteDetails);
-          expect(response.statusCode).toBe(401);
+          expect(response.statusCode).toBe(403);
           expect(response.body.errors).toEqual([
             "You can not send an invite as another user",
           ]);
