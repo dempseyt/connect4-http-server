@@ -45,5 +45,16 @@ describe("invite-service", () => {
         });
       });
     });
+    describe("and an invitee who is not an existing user", () => {
+      it("throws an 'Invalid invitation' error", () => {
+        const invitationCreationDetails = {
+          inviter: "john@mail.com",
+          invitee: "gerald@mail.com",
+        };
+        expect(inviteService.create(invitationCreationDetails)).rejects.toThrow(
+          new InvalidInvitationError("Invitee does not exist")
+        );
+      });
+    });
   });
 });
