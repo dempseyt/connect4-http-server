@@ -21,6 +21,7 @@ export interface UserServiceInterface {
     userCredentials: UserCredentials
   ) => Promise<{ message: string }>;
   getUserDetails: (userEmail: string) => Promise<UserDetails | void>;
+  getDoesUserExist: (userEmail: string) => Promise<boolean>;
 }
 
 class UserService implements UserServiceInterface {
@@ -73,6 +74,11 @@ class UserService implements UserServiceInterface {
       lastName,
       email,
     };
+  }
+  async getDoesUserExist(userEmail: string) {
+    const persistedUsersWithProvidedEmail =
+      await this.userRepository.findByEmail(userEmail);
+    return persistedUsersWithProvidedEmail.length !== 0;
   }
 }
 
