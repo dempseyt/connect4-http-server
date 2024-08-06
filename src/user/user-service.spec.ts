@@ -7,11 +7,14 @@ import UserService, {
 } from "./user-service";
 
 describe("user-service", () => {
+  let userService;
+  beforeEach(() => {
+    const userRepository = new InMemoryUserRepository();
+    userService = new UserService(userRepository);
+  });
   describe("user creation", () => {
     describe("given the details of a user that does not exist", () => {
       it("creates the user", async () => {
-        const userRepository = new InMemoryUserRepository();
-        const userService = new UserService(userRepository);
         const user = await userService.create({
           firstName: "John",
           lastName: "Doe",
@@ -31,8 +34,6 @@ describe("user-service", () => {
     });
     describe("given an email that is already associated with an existing user", () => {
       it('throws a "user already exists" error', async () => {
-        const userRepository = new InMemoryUserRepository();
-        const userService = new UserService(userRepository);
         await userService.create({
           firstName: "John",
           lastName: "Doe",
@@ -53,8 +54,6 @@ describe("user-service", () => {
     });
     describe("given a user with a plain text password", () => {
       it("creates the user with a hashed password", async () => {
-        const userRepository = new InMemoryUserRepository();
-        const userService = new UserService(userRepository);
         const user = await userService.create({
           firstName: "Bob",
           lastName: "Katter",
@@ -69,8 +68,6 @@ describe("user-service", () => {
     describe("given a registered user", () => {
       describe("and invalid credentials for that user", () => {
         it("throws a 'Authentication failed' error", async () => {
-          const userRepository = new InMemoryUserRepository();
-          const userService = new UserService(userRepository);
           const userDetails = {
             firstName: "Joe",
             lastName: "Biden",
@@ -89,8 +86,6 @@ describe("user-service", () => {
       });
       describe("and valid credentials for that user", () => {
         it("returns a message indicating the user was authenticated", async () => {
-          const userRepository = new InMemoryUserRepository();
-          const userService = new UserService(userRepository);
           const userDetails = {
             firstName: "Benson",
             lastName: "Bowser",
@@ -111,8 +106,6 @@ describe("user-service", () => {
     describe("given an unregistered user", () => {
       describe("when an authentication attempt is made", () => {
         it("throws an 'Authentication failed' error", () => {
-          const userRepository = new InMemoryUserRepository();
-          const userService = new UserService(userRepository);
           const userCredentials = {
             email: "remarkable@journey.com",
             password: "iluvbowser",
@@ -137,8 +130,6 @@ describe("user-service", () => {
     });
     describe("given the email for a registered user", () => {
       it("returns the user's details", async () => {
-        const userRepository = new InMemoryUserRepository();
-        const userService = new UserService(userRepository);
         const UserRegisterDetails = {
           firstName: "Rami",
           lastName: "Beasley-Grad",
@@ -154,6 +145,22 @@ describe("user-service", () => {
           lastName: "Beasley-Grad",
           email: "zoofy@hotmail.com",
         });
+      });
+    });
+  });
+  describe("check if a user exists", () => {
+    describe("given the email of an existing user", () => {
+      it("returns true", async () => {
+        const userDetails = {
+          firstName: "John",
+          lastName: "Doe",
+          email: "john@mail.com",
+          password: "password",
+        };
+        await userService.create(userDetails);
+        expect(userService.getDoesUserExist("john@mail.com")).resolves.toBe(
+          true
+        );
       });
     });
   });
