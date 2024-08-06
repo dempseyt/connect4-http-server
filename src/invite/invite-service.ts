@@ -7,8 +7,10 @@ import {
 } from "./invite-service-types.d";
 
 interface InviteServiceInterface {
-  create: (createInviteDetails: CreateInviteDetails) => InviteDetails;
+  create: (createInviteDetails: CreateInviteDetails) => Promise<InviteDetails>;
 }
+
+export class InvalidInvitationError extends Error {}
 
 const lengthOfDayInMilliseconds = 1000 * 60 * 60 * 24;
 
@@ -21,7 +23,12 @@ class InviteService implements InviteServiceInterface {
     this.inviteRepository = inviteRepository;
   }
 
-  create({ inviter, invitee }: CreateInviteDetails) {
+  async create({ inviter, invitee }: CreateInviteDetails) {
+    if (inviter === invitee) {
+      throw new InvalidInvitationError(
+        "Users cannot send invites to themselves"
+      );
+    }
     const uuid = crypto.randomUUID();
     const exp = Date.now() + lengthOfDayInMilliseconds;
 

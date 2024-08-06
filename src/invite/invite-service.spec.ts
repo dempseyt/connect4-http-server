@@ -14,7 +14,7 @@ describe("invite-service", () => {
         jest.useFakeTimers({ doNotFake: ["setImmediate"] });
         const currentTime = Date.now();
         jest.setSystemTime(currentTime);
-        const inviteDetails = inviteService.create({
+        const inviteDetails = await inviteService.create({
           inviter: "john@mail.com",
           invitee: "gerald@mail.com",
         });
@@ -35,7 +35,9 @@ describe("invite-service", () => {
             inviter: "john@mail.com",
             invitee: "john@mail.com",
           };
-          expect(inviteService.create).rejects.toThrow(
+          expect(
+            inviteService.create(invitationCreationDetails)
+          ).rejects.toThrow(
             new InvalidInvitationError(
               "Users cannot send invites to themselves"
             )
