@@ -133,5 +133,35 @@ describe("invite-integration", () => {
         });
       });
     });
+    describe("when the inviter sends an invite to their self", () => {
+      it("responds with http status code 403", async () => {
+        const userDetails = {
+          firstName: "John",
+          lastName: "Doe",
+          email: "john@mail.com",
+          password: "password",
+        };
+        const userCredentials = {
+          userName: "john@mail.com",
+          password: "password",
+        };
+        await request(app).post("/user/register").send(userDetails);
+        const loginResponse = await request(app)
+          .post("/user/login")
+          .send(userCredentials);
+        const inviteDetails = {
+          inviter: "john@mail.com",
+          invitee: "john@mail.com",
+        };
+        const response = await request(app)
+          .post("/invite")
+          .set("Authorization", loginResponse.headers.authorization)
+          .send(inviteDetails);
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errors).toEqual({
+          errors: ["You cannot send an invite to yourself"],
+        });
+      });
+    });
   });
 });
