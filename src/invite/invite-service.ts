@@ -29,6 +29,14 @@ class InviteService implements InviteServiceInterface {
         "Users cannot send invites to themselves"
       );
     }
+
+    const doesInviteeNotExist = !(await this.userService.getDoesUserExist(
+      invitee
+    ));
+    if (doesInviteeNotExist) {
+      throw new InvalidInvitationError("Invitee does not exist");
+    }
+
     const uuid = crypto.randomUUID();
     const exp = Date.now() + lengthOfDayInMilliseconds;
 
