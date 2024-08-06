@@ -163,5 +163,36 @@ describe("invite-integration", () => {
         ]);
       });
     });
+    describe("and an invitee that is not an existing user", () => {
+      describe("when the inviter sends an invite to the invitee", () => {
+        it("responds with http status code 403", async () => {
+          const userDetails = {
+            firstName: "John",
+            lastName: "Doe",
+            email: "john@mail.com",
+            password: "password",
+          };
+          const userCredentials = {
+            userName: "john@mail.com",
+            password: "password",
+          };
+          const inviteDetails = {
+            inviter: "john@mail.com",
+            invitee: "gerald@mail.com",
+          };
+          await request(app).post("/user/register").send(userDetails);
+          const loginResponse = await request(app)
+            .post("/user/login")
+            .send(userCredentials);
+
+          const response = await request(app)
+            .post("/invite")
+            .set("Authorization", loginResponse.header.authorization)
+            .send(inviteDetails);
+          expect(response.statusCode).toBe(403);
+          expect(response.body.errors).toEqual(["Invite could not be send"]);
+        });
+      });
+    });
   });
 });
