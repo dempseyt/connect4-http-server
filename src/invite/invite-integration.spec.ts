@@ -190,7 +190,7 @@ describe("invite-integration", () => {
             .set("Authorization", loginResponse.header.authorization)
             .send(inviteDetails);
           expect(response.statusCode).toBe(403);
-          expect(response.body.errors).toEqual(["Invite could not be send"]);
+          expect(response.body.errors).toEqual(["Invitee does not exist"]);
         });
       });
     });
