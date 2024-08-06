@@ -158,9 +158,9 @@ describe("invite-integration", () => {
           .set("Authorization", loginResponse.headers.authorization)
           .send(inviteDetails);
         expect(response.statusCode).toBe(403);
-        expect(response.body.errors).toEqual({
-          errors: ["You cannot send an invite to yourself"],
-        });
+        expect(response.body.errors).toEqual([
+          "Users cannot send invites to themselves",
+        ]);
       });
     });
   });

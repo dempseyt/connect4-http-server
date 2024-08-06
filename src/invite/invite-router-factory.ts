@@ -18,19 +18,13 @@ const inviteAuthorisationMiddleware: RequestHandler = (req, res, next) =>
 
 const createCreateInviteRequestHandlerFactory =
   (inviteService: InviteService): RequestHandler =>
-  (req, res, next) => {
-    const { invitee, inviter } = req.body;
-    const { uuid, exp } = inviteService.create({ invitee, inviter });
-    const invitationDetails = {
-      uuid,
-      inviter,
-      invitee,
-      exp,
-    };
-    res.status(201).send({ invite: invitationDetails });
-
-    next();
-  };
+  async ({ body: { invitee, inviter } }, res) =>
+    inviteService
+      .create({ invitee, inviter })
+      .then(({ inviter, invitee, exp, uuid }) =>
+        res.status(201).send({ invite: { inviter, invitee, exp, uuid } })
+      )
+      .catch((err) => res.status(403).send({ errors: [err.message] }));
 
 const inviteRouterFactory = (inviteService: InviteService) =>
   pipe(
