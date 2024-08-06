@@ -1,4 +1,5 @@
 import express, { RequestHandler } from "express";
+import { pipe } from "ramda";
 import InviteService from "./invite-service";
 
 const authorisationMiddleware: RequestHandler = (req, res, next) =>
@@ -6,6 +7,13 @@ const authorisationMiddleware: RequestHandler = (req, res, next) =>
     ? next()
     : res.status(401).send({
         errors: ["You must be logged in to send an invite"],
+      });
+
+const inviteAuthorisationMiddleware: RequestHandler = (req, res, next) =>
+  req.body.inviter === res.locals.claims.email
+    ? next()
+    : res.status(403).send({
+        errors: ["You can not send an invite as another user"],
       });
 
 const createCreateInviteRequestHandlerFactory =
@@ -24,29 +32,15 @@ const createCreateInviteRequestHandlerFactory =
     next();
   };
 
-const createInviteAuthorisationMiddleware: RequestHandler = (
-  req,
-  res,
-  next
-) => {
-  const { inviter } = req.body;
-  if (inviter === res.locals.claims.email) {
-    next();
-  }
-  res.status(403).send({
-    errors: ["You can not send an invite as another user"],
-  });
-};
-
-const inviteRouterFactory = (inviteService: InviteService) => {
-  const inviteRouter = express.Router();
-  inviteRouter.use(authorisationMiddleware);
-  inviteRouter.post(
-    "/",
-    createInviteAuthorisationMiddleware,
-    createCreateInviteRequestHandlerFactory(inviteService)
-  );
-  return inviteRouter;
-};
+const inviteRouterFactory = (inviteService: InviteService) =>
+  pipe(
+    (router) => router.use(authorisationMiddleware),
+    (router) =>
+      router.post(
+        "/",
+        inviteAuthorisationMiddleware,
+        createCreateInviteRequestHandlerFactory(inviteService)
+      )
+  )(express.Router());
 
 export default inviteRouterFactory;

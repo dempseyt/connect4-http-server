@@ -1,5 +1,5 @@
 import { UserRegisterRequest } from "@/user/user-router-types";
-import { ValidationResult } from "@/validation";
+import { ValidationResult } from "@/user/validation";
 import Joi, { ValidationErrorItem } from "joi";
 import { applySpec, join, map, path, pipe, prop } from "ramda";
 const schema = Joi.object({

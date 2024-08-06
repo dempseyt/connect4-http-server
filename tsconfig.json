@@ -11,5 +11,12 @@
     }
   },
   "lib": ["ES2015"],
-  "include": ["src/*", "src/jest.d.ts"]
+  "include": [
+    "src/*",
+    "src/jest.d.ts",
+    "src/user/user-integration.spec.ts",
+    "src/user/validate-user-register-request.ts",
+    "src/user/validate-user-register-request-body.ts",
+    "src/user/validation.d.ts"
+  ]
 }

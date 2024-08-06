@@ -1,4 +1,3 @@
-import { UserRegisterRequestBody } from "./user/user-router";
 import validateUserRegisterRequestBody from "./validate-user-register-request-body";
 
 describe("validates-user-register-request-body", () => {
@@ -24,7 +23,7 @@ describe("validates-user-register-request-body", () => {
         email: "gimpy@hotmail.com",
       };
       const validationResult = validateUserRegisterRequestBody(
-        userRegisterRequestBody as UserRegisterRequestBody
+        userRegisterRequestBody
       );
       expect(validationResult).toEqual({
         isValid: false,
@@ -44,7 +43,7 @@ describe("validates-user-register-request-body", () => {
         password: "NotSecure",
       };
       const validationResult = validateUserRegisterRequestBody(
-        userRegisterRequestBody as UserRegisterRequestBody
+        userRegisterRequestBody
       );
       expect(validationResult).toEqual({
         isValid: false,

@@ -2,7 +2,7 @@ import resolveRouters, { RouterParameters } from "@/resolve-routers";
 import express, { RequestHandler } from "express";
 import { jwtDecrypt } from "jose";
 import { JwtPrivateKey } from "./global";
-import validateUserRegisterRequest from "./validate-user-register-request";
+import validateUserRegisterRequest from "./user/validate-user-register-request";
 
 type AppParameters = {
   routerParameters: RouterParameters;
