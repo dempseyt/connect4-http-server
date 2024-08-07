@@ -1,3 +1,5 @@
+import TestFixture from "./test-fixture";
+
 describe("test-fixture", () => {
   describe("given defaults", () => {
     it("creates an app", () => {
