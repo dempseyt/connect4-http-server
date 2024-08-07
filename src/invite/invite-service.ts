@@ -1,5 +1,5 @@
 import UserService from "../user/user-service";
-import { InviteRepository } from "./invite-repository";
+import { InviteRepository, PersistedInvite } from "./invite-repository";
 import {
   CreateInviteDetails,
   InviteDetails,
@@ -8,6 +8,7 @@ import {
 
 interface InviteServiceInterface {
   create: (createInviteDetails: CreateInviteDetails) => Promise<InviteDetails>;
+  getUsersInvites: (userEmail: string) => Promise<PersistedInvite[]>;
 }
 
 export class InvalidInvitationError extends Error {}
@@ -40,6 +41,12 @@ class InviteService implements InviteServiceInterface {
     const uuid = crypto.randomUUID();
     const exp = Date.now() + lengthOfDayInMilliseconds;
 
+    this.inviteRepository.create({
+      inviter: inviter,
+      invitee: invitee,
+      exp: exp,
+    });
+
     return {
       uuid,
       exp,
@@ -47,6 +54,10 @@ class InviteService implements InviteServiceInterface {
       invitee,
       status: InviteStatus.PENDING,
     };
+  }
+
+  async getUsersInvites(userEmail: string) {
+    return await this.inviteRepository.getUsersInvites(userEmail);
   }
 }
 
