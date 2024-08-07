@@ -2,6 +2,7 @@ import InMemoryUserRepository from "../user/in-memory-user-repository";
 import UserService from "../user/user-service";
 import InMemoryInviteRepository from "./in-memory-invite-repository";
 import InviteService, { InvalidInvitationError } from "./invite-service";
+import { InviteStatus } from "./invite-service-types";
 
 describe("invite-service", () => {
   let userService;
@@ -62,6 +63,40 @@ describe("invite-service", () => {
               "Users cannot send invites to themselves"
             )
           );
+        });
+      });
+      describe("when the invitee retrieves their invite", () => {
+        it("provides invitation details", async () => {
+          jest.useFakeTimers();
+          const currentTime = Date.now();
+          jest.setSystemTime(currentTime);
+          await userService.create({
+            firstName: "Gerald",
+            lastName: "Longbottom",
+            email: "gerald@mail.com",
+            password: "password",
+          });
+          await userService.create({
+            firstName: "John",
+            lastName: "Doe",
+            email: "john@mail.com",
+            password: "password",
+          });
+          const inviteDetails = {
+            inviter: "john@mail.com",
+            invitee: "gerald@mail.com",
+          };
+          await inviteService.create(inviteDetails);
+          const lengthOfDayInMilliseconds = 1000 * 60 * 60 * 24;
+          expect(inviteService.getUsersInvites("gerald@mail.com")).toEqual({
+            //@ts-ignore
+            uuid: expect.toBeUuid(),
+            inviter: "john@mail.com",
+            invitee: "gerald@mail.com",
+            exp: currentTime + lengthOfDayInMilliseconds,
+            status: InviteStatus.PENDING,
+          });
+          jest.useRealTimers();
         });
       });
     });
