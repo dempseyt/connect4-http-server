@@ -13,4 +13,5 @@ type PersistedInvite = CreateInviteDetails & {
 
 export interface InviteRepository {
   create: (createInviteDetails: CreateInviteDetails) => PersistedInvite;
+  getUsersInvites: (userEmail: string) => Promise<PersistedInvite[]>;
 }

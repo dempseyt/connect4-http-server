@@ -1,5 +1,4 @@
 import express, { RequestHandler } from "express";
-import { pipe } from "ramda";
 import InviteService from "./invite-service";
 
 const authorisationMiddleware: RequestHandler = (req, res, next) =>
@@ -26,15 +25,26 @@ const createCreateInviteRequestHandlerFactory =
       )
       .catch((err) => res.status(403).send({ errors: [err.message] }));
 
-const inviteRouterFactory = (inviteService: InviteService) =>
-  pipe(
-    (router) => router.use(authorisationMiddleware),
-    (router) =>
-      router.post(
-        "/",
-        inviteAuthorisationMiddleware,
-        createCreateInviteRequestHandlerFactory(inviteService)
-      )
-  )(express.Router());
+const createGetInviteMiddleware =
+  (inviteService: InviteService): RequestHandler =>
+  async (req, res) =>
+    inviteService
+      .getUsersInvites(res.locals.claims.email)
+      .then((invites) => res.status(200).send({ invites }))
+      .catch((err) => res.status(403).send({ errors: [err.message] }));
+
+const inviteRouterFactory = (inviteService: InviteService) => {
+  const inviteRouter = express.Router();
+
+  inviteRouter.use(authorisationMiddleware);
+  inviteRouter.get("/inbox", createGetInviteMiddleware(inviteService));
+  inviteRouter.post(
+    "/",
+    inviteAuthorisationMiddleware,
+    createCreateInviteRequestHandlerFactory(inviteService)
+  );
+
+  return inviteRouter;
+};
 
 export default inviteRouterFactory;

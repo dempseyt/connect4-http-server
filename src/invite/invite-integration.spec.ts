@@ -2,6 +2,7 @@ import { Express } from "express";
 import { generateKeyPair, GenerateKeyPairResult, KeyLike } from "jose";
 import request from "supertest";
 import appFactory from "../app";
+import { InviteStatus } from "./invite-service-types.d";
 
 describe("invite-integration", () => {
   let app: Express;
@@ -253,8 +254,10 @@ describe("invite-integration", () => {
 
             const response = await request(app)
               .get("/invite/inbox")
-              .set("Authorization", inviteeLoginResponse.headers.authorization);
+              .set("Authorization", inviteeLoginResponse.headers.authorization)
+              .send();
 
+            expect(response.statusCode).toBe(200);
             expect(response.body.invites).toEqual([
               {
                 //@ts-ignore
@@ -262,6 +265,7 @@ describe("invite-integration", () => {
                 inviter: "john@mail.com",
                 invitee: "gerald@mail.com",
                 exp: currentTime + lengthOfDayInMilliseconds,
+                status: InviteStatus.PENDING,
               },
             ]);
             jest.useRealTimers();
