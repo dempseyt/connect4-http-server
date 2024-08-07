@@ -33,12 +33,24 @@ describe("in-memory-invite-repository", () => {
     });
   });
   describe("given an existing user email", () => {
-    it("retrieves the invites for that user", () => {
+    it("retrieves the invites for that user", async () => {
       jest.useFakeTimers();
       const currentTime = Date.now();
       jest.setSystemTime();
       const inviteRepository = new InMemoryInviteRepository();
-      expect(inviteRepository.findInvites("gerald@mail.com")).toEqual([
+
+      inviteRepository.create({
+        inviter: "john@mail.com",
+        invitee: "gerald@mail.com",
+        exp: currentTime + lengthOfDayInMilliseconds,
+      });
+      inviteRepository.create({
+        inviter: "john@mail.com",
+        invitee: "sarah@mail.com",
+        exp: currentTime + lengthOfDayInMilliseconds,
+      });
+      const invites = await inviteRepository.getUsersInvites("gerald@mail.com");
+      expect(invites).toEqual([
         {
           // @ts-ignore
           uuid: expect.toBeUuid(),
