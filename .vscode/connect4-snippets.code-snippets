@@ -1,0 +1,28 @@
+{
+  "Jest Describe - Scenario": {
+    "scope": "javascript,typescript",
+    "prefix": "_describe",
+    "body": ["describe(`$1`, () => {", "$2", "})"],
+    "description": "Jest Describe"
+  },
+  "Jest It": {
+    "scope": "javascript,typescript",
+    "prefix": "_it",
+    "body": ["it(`$1`, () => {", "$2", "})"],
+    "description": "Jest It"
+  },
+  "Jest Asynchronous It": {
+    "scope": "javascript,typescript",
+    "prefix": "_ita",
+    "body": ["it(`$1`, async () => {", "$2", "})"],
+    "description": "Jest It"
+  },
+  "console.log": {
+    "scope": "javascript,typescript",
+    "prefix": "clog",
+    "body": [
+      "console.${2|log,error|}('${TM_SELECTED_TEXT:${1}}', ${TM_SELECTED_TEXT}${1})"
+    ],
+    "description": "log output to console"
+  }
+}
