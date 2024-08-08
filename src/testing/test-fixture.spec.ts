@@ -93,10 +93,11 @@ describe("test-fixture", () => {
           userName: "john@mail.com",
           password: "password",
         };
-        await testFixture.login(userCredentials);
+        const loginResponse = await testFixture.login(userCredentials);
         const inviteDetails = {
           inviter: "john@mail.com",
           invitee: "gerald@mail.com",
+          authorization: loginResponse.header.authorization,
         };
         const inviteResponse = await testFixture.invite(inviteDetails);
         expect(inviteResponse.statusCode).toBe(201);

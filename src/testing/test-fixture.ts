@@ -1,6 +1,6 @@
 import { Express } from "express";
 import request, { Response } from "supertest";
-import { UserCredentials, UserDetails } from "./test-fixture.d";
+import { InviteDetails, UserCredentials, UserDetails } from "./test-fixture.d";
 
 interface TestFixture {
   register: (userDetails: UserDetails) => Promise<Response>;
@@ -15,14 +15,18 @@ class TestFixture implements TestFixture {
   }
 
   register = async (userDetails: UserDetails) =>
-    await request(this.app as Express)
+    await request(this.app)
       .post("/user/register")
       .send({ firstName: "John", lastName: "Doe", ...userDetails });
 
   login = async (userCredentials: UserCredentials) =>
-    await request(this.app as Express)
-      .post("/user/login")
-      .send(userCredentials);
+    await request(this.app).post("/user/login").send(userCredentials);
+
+  invite = async ({ inviter, invitee, authorization }: InviteDetails) =>
+    await request(this.app)
+      .post("/invite")
+      .set("Authorization", authorization)
+      .send({ inviter, invitee });
 }
 
 export default TestFixture;
