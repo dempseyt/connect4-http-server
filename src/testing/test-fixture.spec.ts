@@ -37,13 +37,13 @@ describe("test-fixture", () => {
           email: "john@mail.com",
           password: "password",
         };
-        const registerResponse = testFixture.register(userDetails);
+        const registerResponse = await testFixture.register(userDetails);
         // expect(response.statusCode).toBe(201);
         expect(registerResponse.body).toEqual(
           expect.objectContaining({
             firstName: "John",
             lastName: "Doe",
-            email: "johndoe@x.com",
+            email: "john@mail.com",
             // @ts-ignore
             uuid: expect.toBeUuid(),
           })
