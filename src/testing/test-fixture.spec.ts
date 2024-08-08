@@ -110,4 +110,42 @@ describe("test-fixture", () => {
       });
     });
   });
+  describe(`receives an invite`, () => {
+    describe(`given a user is logged in and has been sent one invite`, () => {
+      it(`the given user can access their invite`, async () => {
+        await testFixture.register({
+          email: "john@mail.com",
+          password: "password",
+        });
+        await testFixture.register({
+          email: "gerald@mail.com",
+          password: "password",
+        });
+        const inviterLoginResponse = await testFixture.login({
+          userName: "john@mail.com",
+          password: "password",
+        });
+        await testFixture.invite({
+          inviter: "john@mail.com",
+          invitee: "gerald@mail.com",
+          authorization: inviterLoginResponse.header.authorization,
+        });
+        const inviteeLoginResponse = await testFixture.login({
+          userName: "gerald@mail.com",
+          password: "password",
+        });
+        const response = await testFixture.inbox({
+          email: "gerald@mail.com",
+          authorization: inviteeLoginResponse.header.authorization,
+        });
+        expect(response.statusCode).toBe(200);
+        expect(response.body).toEqual(
+          expect.objectContaining({
+            inviter: "john@mail.com",
+            invitee: "gerald@mail.com",
+          })
+        );
+      });
+    });
+  });
 });
