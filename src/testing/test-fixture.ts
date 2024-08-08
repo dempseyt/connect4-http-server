@@ -1,28 +1,28 @@
 import { Express } from "express";
-import { generateKeyPair } from "jose";
-import request from "supertest";
-import appFactory from "../app";
-import { UserDetails } from "./test-fixture.d";
+import request, { Response } from "supertest";
+import { UserCredentials, UserDetails } from "./test-fixture.d";
 
-interface TestFixture {}
+interface TestFixture {
+  register: (userDetails: UserDetails) => Promise<Response>;
+  login: (UserCredentials: UserCredentials) => Promise<Response>;
+}
 
 class TestFixture implements TestFixture {
-  app: Express;
-  constructor(app?: Express) {
-    this.app =
-      app ??
-      appFactory({
-        routerParameters: {
-          stage: "test",
-          keySet: generateKeyPair("RS256"),
-        },
-      });
+  private app: Express;
+
+  constructor(app: Express) {
+    this.app = app;
   }
 
   register = async (userDetails: UserDetails) =>
-    await request(this.app)
+    await request(this.app as Express)
       .post("/user/register")
       .send({ firstName: "John", lastName: "Doe", ...userDetails });
+
+  login = async (userCredentials: UserCredentials) =>
+    await request(this.app as Express)
+      .post("/user/login")
+      .send(userCredentials);
 }
 
 export default TestFixture;

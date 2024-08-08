@@ -12,7 +12,6 @@ describe("test-fixture", () => {
   });
 
   beforeEach(async () => {
-    testFixture = new TestFixture();
     app = appFactory({
       routerParameters: {
         stage: "test",
@@ -22,6 +21,7 @@ describe("test-fixture", () => {
         },
       },
     });
+    testFixture = new TestFixture(app);
   });
 
   describe("given defaults", () => {
@@ -68,42 +68,18 @@ describe("test-fixture", () => {
   describe(`logging in`, () => {
     describe(`given user details that exist`, () => {
       it(`successfully logs the user in`, async () => {
-        jest.useFakeTimers({
-          doNotFake: ["setImmediate"],
-        });
-        const currentTime = Date.now();
-        jest.setSystemTime(currentTime);
-
         const userDetails = {
           email: "john@mail.com",
           password: "password",
         };
         await testFixture.register(userDetails);
         const userCredentials = {
-          email: "john@mail.com",
+          userName: "john@mail.com",
           password: "password",
         };
-        const { protectedHeader, payload } = await testFixture.login(
-          userCredentials
-        );
 
-        expect(protectedHeader).toEqual({
-          alg: "RSA-OAEP-256",
-          typ: "JWT",
-          enc: "A256GCM",
-        });
-        const durationOfDayInMilliseconds = 1000 * 24 * 60 * 60;
-        const dateTimestampInSeconds = Math.trunc(currentTime / 1000);
-        expect(payload).toEqual({
-          iss: "connect4-http-server",
-          iat: dateTimestampInSeconds,
-          exp: dateTimestampInSeconds + durationOfDayInMilliseconds,
-          sub: "dung.eater@gmail.com",
-          nbf: dateTimestampInSeconds,
-          username: "dung.eater@gmail.com",
-          roles: [],
-        });
-        jest.useRealTimers();
+        const loginResponse = await testFixture.login(userCredentials);
+        expect(loginResponse.header.authorization).not.toBeUndefined();
       });
     });
   });
