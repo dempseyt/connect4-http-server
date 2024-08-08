@@ -38,7 +38,6 @@ describe("test-fixture", () => {
           password: "password",
         };
         const registerResponse = await testFixture.register(userDetails);
-        // expect(response.statusCode).toBe(201);
         expect(registerResponse.body).toEqual(
           expect.objectContaining({
             firstName: "John",
@@ -49,6 +48,20 @@ describe("test-fixture", () => {
           })
         );
         expect(registerResponse.headers["content-type"]).toMatch(/json/);
+      });
+    });
+    describe("when given user details that already exist", () => {
+      it(`does not register the user`, async () => {
+        const userDetails = {
+          email: "john@mail.com",
+          password: "password",
+        };
+        await testFixture.register(userDetails);
+        const failedRegisterResponse = await testFixture.register(userDetails);
+        expect(failedRegisterResponse.body.errors).toEqual([
+          "A user with that email already exists",
+        ]);
+        expect(failedRegisterResponse.statusCode).toBe(403);
       });
     });
   });
