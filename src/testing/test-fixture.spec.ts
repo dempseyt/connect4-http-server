@@ -10,7 +10,6 @@ describe("test-fixture", () => {
   beforeAll(async () => {
     jwtKeyPair = await generateKeyPair("RS256");
   });
-
   beforeEach(async () => {
     app = appFactory({
       routerParameters: {
@@ -24,12 +23,6 @@ describe("test-fixture", () => {
     testFixture = new TestFixture(app);
   });
 
-  describe("given defaults", () => {
-    it("creates an app", () => {
-      const testFixture = new TestFixture();
-      expect(testFixture).toBeInstanceOf(TestFixture);
-    });
-  });
   describe("registering a user", () => {
     describe("when given valid user details", () => {
       it("successfully registers the user", async () => {
@@ -80,6 +73,39 @@ describe("test-fixture", () => {
 
         const loginResponse = await testFixture.login(userCredentials);
         expect(loginResponse.header.authorization).not.toBeUndefined();
+      });
+    });
+  });
+  describe("sending an invite", () => {
+    describe(`to an existing user`, () => {
+      it(`it successfully sends the invite`, async () => {
+        const userDetails = {
+          email: "john@mail.com",
+          password: "password",
+        };
+        const recipientDetails = {
+          email: "gerald@mail.com",
+          password: "password",
+        };
+        await testFixture.register(userDetails);
+        await testFixture.register(recipientDetails);
+        const userCredentials = {
+          userName: "john@mail.com",
+          password: "password",
+        };
+        await testFixture.login(userCredentials);
+        const inviteDetails = {
+          inviter: "john@mail.com",
+          invitee: "gerald@mail.com",
+        };
+        const inviteResponse = await testFixture.invite(inviteDetails);
+        expect(inviteResponse.statusCode).toBe(201);
+        expect(inviteResponse.body.invite).toEqual(
+          expect.objectContaining({
+            inviter: "john@mail.com",
+            invitee: "gerald@mail.com",
+          })
+        );
       });
     });
   });
