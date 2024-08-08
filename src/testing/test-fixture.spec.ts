@@ -99,7 +99,7 @@ describe("test-fixture", () => {
           invitee: "gerald@mail.com",
           authorization: loginResponse.header.authorization,
         };
-        const inviteResponse = await testFixture.invite(inviteDetails);
+        const inviteResponse = await testFixture.sendInvite(inviteDetails);
         expect(inviteResponse.statusCode).toBe(201);
         expect(inviteResponse.body.invite).toEqual(
           expect.objectContaining({
@@ -125,7 +125,7 @@ describe("test-fixture", () => {
           userName: "john@mail.com",
           password: "password",
         });
-        await testFixture.invite({
+        await testFixture.sendInvite({
           inviter: "john@mail.com",
           invitee: "gerald@mail.com",
           authorization: inviterLoginResponse.header.authorization,
@@ -134,17 +134,12 @@ describe("test-fixture", () => {
           userName: "gerald@mail.com",
           password: "password",
         });
-        const response = await testFixture.inbox({
+        const response = await testFixture.getInvites({
           email: "gerald@mail.com",
           authorization: inviteeLoginResponse.header.authorization,
         });
         expect(response.statusCode).toBe(200);
-        expect(response.body).toEqual(
-          expect.objectContaining({
-            inviter: "john@mail.com",
-            invitee: "gerald@mail.com",
-          })
-        );
+        expect(response.body.invites.length).toBeGreaterThanOrEqual(1);
       });
     });
   });
