@@ -8,13 +8,10 @@ describe(`create-invite-event-listener`, () => {
   describe(`given a event subscription`, () => {
     describe(`and an invite notification function`, () => {
       describe(`when an invite is sent`, () => {
+        const subscription = new Subject<InviteCreatedEvent>();
+        const notificationFn = jest.fn();
         it(`notifies the invitee`, () => {
-          const notificationFn = jest.fn();
-          const subscription = new Subject<InviteCreatedEvent>();
-          const inviteEventListener = createInviteEventListener(
-            subscription,
-            notificationFn
-          );
+          createInviteEventListener(subscription, notificationFn);
 
           subscription.next({
             type: InviteEvents.INVITATION_CREATED,
@@ -33,7 +30,6 @@ describe(`create-invite-event-listener`, () => {
               inviter: "john@mail.com",
               invitee: "gerald@mail.com",
               exp: expect.any(Number),
-              // @ts-ignore
               uuid: expect.toBeUuid(),
               status: InviteStatus.PENDING,
             },

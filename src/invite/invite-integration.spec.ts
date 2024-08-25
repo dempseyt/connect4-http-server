@@ -20,6 +20,7 @@ describe("invite-integration", () => {
           jwtPublicKey: jwtKeyPair.publicKey,
           jwtPrivateKey: jwtKeyPair.privateKey,
         },
+        publishEvent: () => Promise.resolve(),
       },
     });
     jest.useFakeTimers({ doNotFake: ["setImmediate"] });
@@ -86,7 +87,6 @@ describe("invite-integration", () => {
             const lengthOfDayInMilliseconds = 1000 * 60 * 60 * 24;
             expect(response.statusCode).toBe(201);
             expect(response.body.invite).toEqual({
-              // @ts-ignore
               uuid: expect.toBeUuid(),
               inviter: "john@mail.com",
               invitee: "gerald@mail.com",
@@ -260,7 +260,6 @@ describe("invite-integration", () => {
             expect(response.statusCode).toBe(200);
             expect(response.body.invites).toEqual([
               {
-                //@ts-ignore
                 uuid: expect.toBeUuid(),
                 inviter: "john@mail.com",
                 invitee: "gerald@mail.com",

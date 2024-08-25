@@ -3,7 +3,8 @@ import { InviteRepository, PersistedInvite } from "./invite-repository";
 import {
   CreateInviteDetails,
   InviteDetails,
-  InviteStatus,
+  InviteEvents,
+  InviteServiceEventHandlers,
 } from "./invite-service-types.d";
 
 interface InviteServiceInterface {
@@ -18,10 +19,16 @@ const lengthOfDayInMilliseconds = 1000 * 60 * 60 * 24;
 class InviteService implements InviteServiceInterface {
   private userService: UserService;
   private inviteRepository: InviteRepository;
+  private eventPublishers: InviteServiceEventHandlers;
 
-  constructor(userService: UserService, inviteRepository: InviteRepository) {
+  constructor(
+    userService: UserService,
+    inviteRepository: InviteRepository,
+    eventPublishers: InviteServiceEventHandlers
+  ) {
     this.userService = userService;
     this.inviteRepository = inviteRepository;
+    this.eventPublishers = eventPublishers;
   }
 
   async create({ inviter, invitee }: CreateInviteDetails) {
@@ -34,6 +41,7 @@ class InviteService implements InviteServiceInterface {
     const doesInviteeNotExist = !(await this.userService.getDoesUserExist(
       invitee
     ));
+
     if (doesInviteeNotExist) {
       throw new InvalidInvitationError("Invitee does not exist");
     }
@@ -41,19 +49,15 @@ class InviteService implements InviteServiceInterface {
     const uuid = crypto.randomUUID();
     const exp = Date.now() + lengthOfDayInMilliseconds;
 
-    this.inviteRepository.create({
+    const inviteDetails = this.inviteRepository.create({
       inviter: inviter,
       invitee: invitee,
       exp: exp,
     });
 
-    return {
-      uuid,
-      exp,
-      inviter,
-      invitee,
-      status: InviteStatus.PENDING,
-    };
+    await this.eventPublishers[InviteEvents.INVITATION_CREATED](inviteDetails);
+
+    return inviteDetails;
   }
 
   async getUsersInvites(userEmail: string) {

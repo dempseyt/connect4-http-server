@@ -1,6 +1,8 @@
+import { EventPublisher } from "@/app.d";
 import { JwtPrivateKey, JwtPublicKey, Stage } from "@/global";
 import InMemoryInviteRepository from "@/invite/in-memory-invite-repository";
 import { Router } from "express";
+import createInviteEventHandlers from "./invite/create-invite-event-handlers";
 import inviteRouterFactory from "./invite/invite-router-factory";
 import InviteService from "./invite/invite-service";
 import InMemoryUserRepository from "./user/in-memory-user-repository";
@@ -18,11 +20,13 @@ export type RouterParameters = {
     jwtPublicKey: JwtPublicKey;
     jwtPrivateKey: JwtPrivateKey;
   };
+  publishEvent?: EventPublisher<unknown, unknown>;
 };
 
 const resolveRouters = ({
   stage,
   keySet,
+  publishEvent,
 }: RouterParameters): Record<RouterType, Router> => {
   const userRepository =
     stage !== "production"
@@ -33,7 +37,11 @@ const resolveRouters = ({
       ? new InMemoryInviteRepository()
       : new InMemoryInviteRepository();
   const userService = new UserService(userRepository);
-  const inviteService = new InviteService(userService, inviteRepository);
+  const inviteService = new InviteService(
+    userService,
+    inviteRepository,
+    createInviteEventHandlers(publishEvent)
+  );
   return {
     [RouterType.userRouter]: userRouterFactory(userService, keySet),
     [RouterType.inviteRouter]: inviteRouterFactory(inviteService),
