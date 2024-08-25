@@ -19,7 +19,6 @@ describe("in-memory-user-repository", () => {
           lastName: "Doe",
           email: "john@doe.com",
           password: "Hello123",
-          // @ts-ignore
           uuid: expect.toBeUuid(),
         })
       );

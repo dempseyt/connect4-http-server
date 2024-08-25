@@ -26,7 +26,6 @@ describe("user-service", () => {
             firstName: "John",
             lastName: "Doe",
             email: "john@doe.com",
-            // @ts-ignore
             uuid: expect.toBeUuid(),
           })
         );

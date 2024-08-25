@@ -46,7 +46,7 @@ const loginRequestHandlerFactory =
         .setNotBefore("0 sec from now")
         .setSubject(email)
         .encrypt(jwtPublicKey);
-      res.setHeader("Authorization", `Basic ${jwt}`).send();
+      res.setHeader("Authorization", `Basic ${jwt}`).status(200).send();
     } catch (error) {
       res.status(403).send({ errors: ["Login attempt failed."] });
     }

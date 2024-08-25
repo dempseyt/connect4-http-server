@@ -37,7 +37,6 @@ describe("user-integration", () => {
             firstName: "John",
             lastName: "Doe",
             email: "johndoe@x.com",
-            // @ts-ignore
             uuid: expect.toBeUuid(),
           })
         );

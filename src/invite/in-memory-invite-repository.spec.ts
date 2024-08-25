@@ -25,7 +25,6 @@ describe("in-memory-invite-repository", () => {
         inviter: "john@mail.com",
         invitee: "gerald@mail.com",
         exp: expiration,
-        // @ts-ignore
         uuid: expect.toBeUuid(),
         status: "PENDING",
       });
@@ -52,7 +51,6 @@ describe("in-memory-invite-repository", () => {
       const invites = await inviteRepository.getUsersInvites("gerald@mail.com");
       expect(invites).toEqual([
         {
-          // @ts-ignore
           uuid: expect.toBeUuid(),
           inviter: "john@mail.com",
           invitee: "gerald@mail.com",
