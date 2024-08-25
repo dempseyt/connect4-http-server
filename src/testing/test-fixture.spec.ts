@@ -18,6 +18,7 @@ describe("test-fixture", () => {
           jwtPublicKey: jwtKeyPair.publicKey,
           jwtPrivateKey: jwtKeyPair.privateKey,
         },
+        publishEvent: (queue, payload) => Promise.resolve(),
       },
     });
     testFixture = new TestFixture(app);
@@ -36,7 +37,6 @@ describe("test-fixture", () => {
             firstName: "John",
             lastName: "Doe",
             email: "john@mail.com",
-            // @ts-ignore
             uuid: expect.toBeUuid(),
           })
         );
@@ -67,7 +67,7 @@ describe("test-fixture", () => {
         };
         await testFixture.register(userDetails);
         const userCredentials = {
-          userName: "john@mail.com",
+          email: "john@mail.com",
           password: "password",
         };
 
@@ -90,7 +90,7 @@ describe("test-fixture", () => {
         await testFixture.register(userDetails);
         await testFixture.register(recipientDetails);
         const userCredentials = {
-          userName: "john@mail.com",
+          email: "john@mail.com",
           password: "password",
         };
         const loginResponse = await testFixture.login(userCredentials);
@@ -122,7 +122,7 @@ describe("test-fixture", () => {
           password: "password",
         });
         const inviterLoginResponse = await testFixture.login({
-          userName: "john@mail.com",
+          email: "john@mail.com",
           password: "password",
         });
         await testFixture.sendInvite({
@@ -131,7 +131,7 @@ describe("test-fixture", () => {
           authorization: inviterLoginResponse.header.authorization,
         });
         const inviteeLoginResponse = await testFixture.login({
-          userName: "gerald@mail.com",
+          email: "gerald@mail.com",
           password: "password",
         });
         const response = await testFixture.getInvites({
@@ -141,6 +141,15 @@ describe("test-fixture", () => {
         expect(response.statusCode).toBe(200);
         expect(response.body.invites.length).toBeGreaterThanOrEqual(1);
       });
+    });
+  });
+  describe(`register and login`, () => {
+    it(`returns the authorization token`, async () => {
+      const authorizationToken = await testFixture.registerAndLogin(
+        "gerald@mail.com",
+        "password"
+      );
+      expect(authorizationToken.slice(0, 5)).toEqual("Basic");
     });
   });
 });
