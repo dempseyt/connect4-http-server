@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "module": "CommonJS",
+    "module": "NodeNext",
     "esModuleInterop": true,
     "target": "ES6",
-    "moduleResolution": "Node",
+    "moduleResolution": "NodeNext",
     "outDir": "dist",
     "isolatedModules": true,
     "paths": {
@@ -11,12 +11,5 @@
     }
   },
   "lib": ["ES2015"],
-  "include": [
-    "src/*",
-    "src/jest.d.ts",
-    "src/user/user-integration.spec.ts",
-    "src/user/validate-user-register-request.ts",
-    "src/user/validate-user-register-request-body.ts",
-    "src/user/validation.d.ts"
-  ]
+  "include": ["src/jest.d.ts", "src/**/*"]
 }
