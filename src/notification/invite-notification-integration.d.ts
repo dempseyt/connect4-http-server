@@ -1,4 +1,4 @@
-import { InviteStatus } from "./invite-service-types.d";
+import { InviteStatus } from "@/invite/invite-service-types";
 
 export type InviteReceivedMessage = {
   inviter: string;

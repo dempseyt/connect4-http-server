@@ -17,7 +17,7 @@ export default class InMemoryUserRepository implements UserRepository {
     return Promise.resolve({ ...user, uuid: userUuid });
   }
 
-  async findByEmail(email: string) {
+  async findByEmail(email: string): Promise<PersistedUser[]> {
     return Promise.resolve(
       Array.from(this.users.values()).filter((user) => user.email === email)
     );
