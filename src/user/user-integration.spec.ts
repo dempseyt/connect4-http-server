@@ -13,12 +13,10 @@ describe("user-integration", () => {
 
   beforeEach(async () => {
     app = appFactory({
-      routerParameters: {
-        stage: "test",
-        keySet: {
-          jwtPublicKey: jwtKeyPair.publicKey,
-          jwtPrivateKey: jwtKeyPair.privateKey,
-        },
+      stage: "test",
+      keySet: {
+        jwtPublicKey: jwtKeyPair.publicKey,
+        jwtPrivateKey: jwtKeyPair.privateKey,
       },
     });
   });

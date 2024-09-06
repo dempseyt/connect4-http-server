@@ -1,11 +1,17 @@
-import resolveRouters, { RouterParameters } from "@/resolve-routers";
+import resolveRouters from "@/resolve-routers";
 import express, { RequestHandler } from "express";
 import { jwtDecrypt } from "jose";
-import { JwtPrivateKey } from "./global";
+import { JwtPrivateKey, JwtPublicKey, Stage } from "./global";
 import validateUserRegisterRequest from "./user/validate-user-register-request";
 
 type AppParameters = {
-  routerParameters: RouterParameters;
+  stage: Stage;
+  keySet: {
+    jwtPublicKey: JwtPublicKey;
+    jwtPrivateKey: JwtPrivateKey;
+  };
+  internalEventPublisher?: (type: unknown, payload: unknown) => Promise<void>;
+  authority?: string;
 };
 
 const createAuthenticationMiddleware =
@@ -27,11 +33,20 @@ const createAuthenticationMiddleware =
     next();
   };
 
-const appFactory = (appParameters: AppParameters) => {
-  const { routerParameters } = appParameters;
-  const { jwtPrivateKey: privateKey } = routerParameters.keySet;
-  const { userRouter, inviteRouter } = resolveRouters(routerParameters);
+const appFactory = ({
+  stage,
+  keySet,
+  internalEventPublisher,
+  authority,
+}: AppParameters) => {
+  const { jwtPrivateKey: privateKey } = keySet;
   const app = express();
+  const { userRouter, inviteRouter } = resolveRouters({
+    stage,
+    keySet,
+    internalEventPublisher,
+    authority,
+  });
   app.use(express.json());
   app.use(createAuthenticationMiddleware(privateKey));
   app.use("/user", validateUserRegisterRequest, userRouter);

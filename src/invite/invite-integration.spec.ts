@@ -14,14 +14,12 @@ describe("invite-integration", () => {
 
   beforeEach(async () => {
     app = appFactory({
-      routerParameters: {
-        stage: "test",
-        keySet: {
-          jwtPublicKey: jwtKeyPair.publicKey,
-          jwtPrivateKey: jwtKeyPair.privateKey,
-        },
-        publishEvent: () => Promise.resolve(),
+      stage: "test",
+      keySet: {
+        jwtPublicKey: jwtKeyPair.publicKey,
+        jwtPrivateKey: jwtKeyPair.privateKey,
       },
+      internalEventPublisher: () => Promise.resolve(),
     });
     jest.useFakeTimers({ doNotFake: ["setImmediate"] });
     const currentTime = Date.now();

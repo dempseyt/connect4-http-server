@@ -4,7 +4,7 @@ import {
   CreateInviteDetails,
   InviteDetails,
   InviteEvents,
-  InviteServiceEventHandlers,
+  InviteServiceEventPublishers,
 } from "./invite-service-types.d";
 
 interface InviteServiceInterface {
@@ -19,12 +19,12 @@ const lengthOfDayInMilliseconds = 1000 * 60 * 60 * 24;
 class InviteService implements InviteServiceInterface {
   private userService: UserService;
   private inviteRepository: InviteRepository;
-  private eventPublishers: InviteServiceEventHandlers;
+  private eventPublishers: InviteServiceEventPublishers;
 
   constructor(
     userService: UserService,
     inviteRepository: InviteRepository,
-    eventPublishers: InviteServiceEventHandlers
+    eventPublishers: InviteServiceEventPublishers
   ) {
     this.userService = userService;
     this.inviteRepository = inviteRepository;
@@ -46,7 +46,6 @@ class InviteService implements InviteServiceInterface {
       throw new InvalidInvitationError("Invitee does not exist");
     }
 
-    const uuid = crypto.randomUUID();
     const exp = Date.now() + lengthOfDayInMilliseconds;
 
     const inviteDetails = this.inviteRepository.create({

@@ -9,3 +9,5 @@ export type KeySet = {
   jwtPublicKey: JwtPublicKey;
   jwtPrivateKey: JwtPrivateKey;
 };
+
+// export type InternalEventPublisher = (queue: string)

@@ -1,56 +1,48 @@
 import appFactory from "@/app";
+import createSocketServer from "@/create-socket-server";
 import createDispatchNotification from "@/notification/create-dispatch-notification";
 import TestFixture from "@/testing/test-fixture";
 import { Express } from "express";
 import http from "http";
-import { generateKeyPair, jwtDecrypt } from "jose";
+import { generateKeyPair } from "jose";
 import { AddressInfo } from "net";
-import { Server } from "socket.io";
 import { Socket as ClientSocket, io as ioc } from "socket.io-client";
 
 describe(`create-dispatch-notification`, () => {
   let testFixture: TestFixture;
   let app: Express;
   let httpServer: http.Server;
-  let server: Server;
-  let connectionAddress: string;
+  let dispatchNotification;
   let callCreatedDispatchNotificationWhenPromiseResolves: (
     value: unknown
   ) => void = () => {};
 
   beforeEach(async () => {
     const jwtKeyPair = await generateKeyPair("RS256");
+    httpServer = http.createServer().listen();
+    const port = (httpServer.address() as AddressInfo).port;
     app = appFactory({
-      routerParameters: {
-        stage: "test",
-        keySet: {
-          jwtPublicKey: jwtKeyPair.publicKey,
-          jwtPrivateKey: jwtKeyPair.privateKey,
-        },
-        publishEvent: (queue, payload) => Promise.resolve(),
+      stage: "test",
+      keySet: {
+        jwtPrivateKey: jwtKeyPair.privateKey,
+        jwtPublicKey: jwtKeyPair.publicKey,
       },
+      internalEventPublisher: () => Promise.resolve(),
+      authority: `localhost:${port}`,
     });
+    httpServer.close();
+    const io = createSocketServer(app, {
+      port,
+      path: "/notification",
+      privateKey: jwtKeyPair.privateKey,
+    });
+    dispatchNotification = createDispatchNotification(io);
     testFixture = new TestFixture(app);
-    httpServer = http.createServer(app);
-    server = new Server(httpServer);
-    httpServer.listen(() => {
-      const port = (httpServer.address() as AddressInfo).port;
-      connectionAddress = `http://localhost:${port}`;
-    });
-    server.on("connection", async (socket) => {
-      const token = socket.handshake.auth.token;
-      const { payload } = await jwtDecrypt(token, jwtKeyPair.privateKey);
-      const { username } = payload;
-
-      callCreatedDispatchNotificationWhenPromiseResolves("Resolved");
-      socket.join(username as string);
-    });
   });
 
   afterEach(() => {
-    httpServer.close();
-    server.close();
     httpServer.removeAllListeners();
+    httpServer.close();
   });
 
   describe(`given a user connected to a socket`, () => {
@@ -58,11 +50,13 @@ describe(`create-dispatch-notification`, () => {
     let thirdPartySocket: ClientSocket;
 
     afterEach(() => {
-      if (recipientSocket instanceof ClientSocket) {
+      if (recipientSocket) {
         recipientSocket.disconnect();
+        recipientSocket.close();
       }
-      if (thirdPartySocket instanceof ClientSocket) {
+      if (thirdPartySocket) {
         thirdPartySocket.disconnect();
+        thirdPartySocket.close();
       }
     });
     describe(`and no other users are connected`, () => {
@@ -75,26 +69,42 @@ describe(`create-dispatch-notification`, () => {
           const userPromise = new Promise((resolve) => {
             userResolver = resolve;
           });
-          const recipientAuth = await testFixture.registerAndLogin(
-            "recipient@mail.com",
-            "password"
-          );
+          await testFixture.register({
+            email: "player1@mail.com",
+            password: "password",
+          });
 
-          recipientSocket = ioc(connectionAddress, {
+          const playerOneAuth = await testFixture.login({
+            email: "player1@mail.com",
+            password: "password",
+          });
+
+          const {
+            body: {
+              notification: { uri },
+            },
+            headers: { authorization },
+          } = playerOneAuth;
+
+          recipientSocket = ioc(uri, {
             auth: {
-              token: recipientAuth.split(" ")[1],
+              token: authorization.split(" ")[1],
             },
           });
 
           recipientSocket.connect();
-          recipientSocket.on("event", (details) => {
-            userResolver(details);
-          });
+          recipientSocket
+            .on("event", (details) => {
+              userResolver(details);
+            })
+            .on("connection_established", () => {
+              callCreatedDispatchNotificationWhenPromiseResolves("");
+            });
 
           await singleUserPromise;
-          const dispatchNotification = createDispatchNotification(server);
+
           dispatchNotification({
-            recipient: "recipient@mail.com",
+            recipient: "player1@mail.com",
             type: "event",
             payload: {
               message: "Hello",
@@ -116,32 +126,48 @@ describe(`create-dispatch-notification`, () => {
             resolveUserReceivesMessagesPromise = resolve;
           });
 
-          const recipientAuth = await testFixture.registerAndLogin(
-            "recipient@mail.com",
-            "password"
-          );
-          recipientSocket = ioc(connectionAddress, {
+          await testFixture.register({
+            email: "player1@mail.com",
+            password: "password",
+          });
+
+          const playerOneAuth = await testFixture.login({
+            email: "player1@mail.com",
+            password: "password",
+          });
+
+          const {
+            body: {
+              notification: { uri },
+            },
+            headers: { authorization },
+          } = playerOneAuth;
+
+          recipientSocket = ioc(uri, {
             auth: {
-              token: recipientAuth.split(" ")[1],
+              token: authorization.split(" ")[1],
             },
           });
 
           recipientSocket.connect();
           const messages = [];
           let messagesReceived = 0;
-          recipientSocket.on("event", (details) => {
-            messagesReceived++;
-            messages.push(details);
-            if (messagesReceived === 2) {
-              resolveUserReceivesMessagesPromise(messages);
-            }
-          });
+          recipientSocket
+            .on("event", (details) => {
+              messagesReceived++;
+              messages.push(details);
+              if (messagesReceived === 2) {
+                resolveUserReceivesMessagesPromise(messages);
+              }
+            })
+            .on("connection_established", () => {
+              callCreatedDispatchNotificationWhenPromiseResolves("");
+            });
 
           await singleUserPromise;
-          const dispatchNotification = createDispatchNotification(server);
 
           dispatchNotification({
-            recipient: "recipient@mail.com",
+            recipient: "player1@mail.com",
             type: "event",
             payload: {
               message: "Hello",
@@ -149,7 +175,7 @@ describe(`create-dispatch-notification`, () => {
           });
 
           dispatchNotification({
-            recipient: "recipient@mail.com",
+            recipient: "player1@mail.com",
             type: "event",
             payload: {
               message: "Bye",
@@ -174,44 +200,79 @@ describe(`create-dispatch-notification`, () => {
             userResolver = resolve;
           });
 
-          const recipientAuth = await testFixture.registerAndLogin(
-            "recipient@mail.com",
-            "password"
-          );
-          const thirdPartyAuth = await testFixture.registerAndLogin(
-            "thirdParty@mail.com",
-            "password"
-          );
-
-          recipientSocket = ioc(connectionAddress, {
-            auth: {
-              token: recipientAuth.split(" ")[1],
-            },
-          });
-          thirdPartySocket = ioc(connectionAddress, {
-            auth: {
-              token: thirdPartyAuth.split(" ")[1],
-            },
+          await testFixture.register({
+            email: "player1@mail.com",
+            password: "password",
           });
 
-          recipientSocket.on("event", (details) => {
-            userResolver(details);
+          const playerOneLoginResponse = await testFixture.login({
+            email: "player1@mail.com",
+            password: "password",
           });
+
+          const {
+            body: {
+              notification: { uri: playerOneUri },
+            },
+            headers: { authorization: playerOneAuthorization },
+          } = playerOneLoginResponse;
+
+          recipientSocket = ioc(playerOneUri, {
+            auth: {
+              token: playerOneAuthorization.split(" ")[1],
+            },
+          });
+
+          recipientSocket.connect();
+          recipientSocket
+            .on("event", (details) => {
+              userResolver(details);
+            })
+            .on("connection_established", () => {
+              callCreatedDispatchNotificationWhenPromiseResolves("");
+            });
 
           await firstUserConnectionPromise;
+
+          await testFixture.register({
+            email: "thirdParty@mail.com",
+            password: "password",
+          });
+
+          const thirdPartyLoginResponse = await testFixture.login({
+            email: "thirdParty@mail.com",
+            password: "password",
+          });
+
+          const {
+            body: {
+              notification: { uri: thirdPartyUri },
+            },
+            headers: { authorization: thirdPartyAuthorization },
+          } = thirdPartyLoginResponse;
+
+          thirdPartySocket = ioc(thirdPartyUri, {
+            auth: {
+              token: thirdPartyAuthorization.split(" ")[1],
+            },
+          });
+
           const secondUserConnectionPromise = new Promise((resolve) => {
             callCreatedDispatchNotificationWhenPromiseResolves = resolve;
           });
 
-          thirdPartySocket.on("event", () => {
-            expect(true).toBeFalsy();
-          });
+          thirdPartySocket.connect();
+          thirdPartySocket
+            .on("event", () => {
+              expect(true).toBeFalsy();
+            })
+            .on("connection_established", () => {
+              callCreatedDispatchNotificationWhenPromiseResolves("");
+            });
 
           await secondUserConnectionPromise;
-          const dispatchNotification = createDispatchNotification(server);
-
           dispatchNotification({
-            recipient: "recipient@mail.com",
+            recipient: "player1@mail.com",
             type: "event",
             payload: {
               message: "Hello",
@@ -244,41 +305,72 @@ describe(`create-dispatch-notification`, () => {
             resolvePlayer2ReceivesMessagePromise = resolve;
           });
 
-          const playerOneAuth = await testFixture.registerAndLogin(
-            "player1@mail.com",
-            "password"
-          );
-          const playerTwoAuth = await testFixture.registerAndLogin(
-            "player2@mail.com",
-            "password"
-          );
+          await testFixture.register({
+            email: "player1@mail.com",
+            password: "password",
+          });
+          const player1LoginResponse = await testFixture.login({
+            email: "player1@mail.com",
+            password: "password",
+          });
+          const {
+            body: {
+              notification: { uri: player1Uri },
+            },
+            headers: { authorization: player1Authorization },
+          } = player1LoginResponse;
 
-          player1Socket = ioc(connectionAddress, {
+          await testFixture.register({
+            email: "player2@mail.com",
+            password: "password",
+          });
+          const player2LoginResponse = await testFixture.login({
+            email: "player2@mail.com",
+            password: "password",
+          });
+          const {
+            body: {
+              notification: { uri: player2Uri },
+            },
+            headers: { authorization: player2Authorization },
+          } = player2LoginResponse;
+
+          player1Socket = ioc(player1Uri, {
             auth: {
-              token: playerOneAuth.split(" ")[1],
+              token: player1Authorization.split(" ")[1],
             },
           });
-          player2Socket = ioc(connectionAddress, {
+          player2Socket = ioc(player2Uri, {
             auth: {
-              token: playerTwoAuth.split(" ")[1],
+              token: player2Authorization.split(" ")[1],
             },
           });
 
-          player1Socket.on("event", (details) => {
-            resolvePlayer1ReceivesMessagePromise(details);
-          });
+          player1Socket.connect();
+          player1Socket
+            .on("event", (details) => {
+              resolvePlayer1ReceivesMessagePromise(details);
+            })
+            .on("connection_established", () => {
+              callCreatedDispatchNotificationWhenPromiseResolves("");
+            });
 
           await firstUserConnectPromise;
+
           const secondUserConnectionPromise = new Promise((resolve) => {
             callCreatedDispatchNotificationWhenPromiseResolves = resolve;
           });
 
-          player2Socket.on("event", (details) => {
-            resolvePlayer2ReceivesMessagePromise(details);
-          });
+          player2Socket.connect();
+          player2Socket
+            .on("event", (details) => {
+              resolvePlayer2ReceivesMessagePromise(details);
+            })
+            .on("connection_established", () => {
+              callCreatedDispatchNotificationWhenPromiseResolves("");
+            });
 
           await secondUserConnectionPromise;
-          const dispatchNotification = createDispatchNotification(server);
 
           dispatchNotification({
             recipient: "player1@mail.com",

@@ -12,14 +12,12 @@ describe("test-fixture", () => {
   });
   beforeEach(async () => {
     app = appFactory({
-      routerParameters: {
-        stage: "test",
-        keySet: {
-          jwtPublicKey: jwtKeyPair.publicKey,
-          jwtPrivateKey: jwtKeyPair.privateKey,
-        },
-        publishEvent: (queue, payload) => Promise.resolve(),
+      stage: "test",
+      keySet: {
+        jwtPublicKey: jwtKeyPair.publicKey,
+        jwtPrivateKey: jwtKeyPair.privateKey,
       },
+      internalEventPublisher: (queue, payload) => Promise.resolve(),
     });
     testFixture = new TestFixture(app);
   });

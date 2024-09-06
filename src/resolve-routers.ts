@@ -1,10 +1,10 @@
-import { EventPublisher } from "@/app.d";
 import { JwtPrivateKey, JwtPublicKey, Stage } from "@/global";
 import InMemoryInviteRepository from "@/invite/in-memory-invite-repository";
 import { Router } from "express";
-import createInviteEventHandlers from "./invite/create-invite-event-handlers";
+import createInviteEventPublishers from "./invite/create-invite-event-publishers";
 import inviteRouterFactory from "./invite/invite-router-factory";
 import InviteService from "./invite/invite-service";
+import { InviteServiceEventPublishers } from "./invite/invite-service-types";
 import InMemoryUserRepository from "./user/in-memory-user-repository";
 import userRouterFactory from "./user/user-router";
 import UserService from "./user/user-service";
@@ -20,30 +20,48 @@ export type RouterParameters = {
     jwtPublicKey: JwtPublicKey;
     jwtPrivateKey: JwtPrivateKey;
   };
-  publishEvent?: EventPublisher<unknown, unknown>;
+  internalEventPublisher?: (type: unknown, payload: unknown) => Promise<void>;
+  authority?: string;
 };
+
+const createUserRepository = (stage: Stage) =>
+  stage === "production"
+    ? new InMemoryUserRepository()
+    : new InMemoryUserRepository();
+
+const createInviteRepository = (stage: Stage) =>
+  stage === "production"
+    ? new InMemoryInviteRepository()
+    : new InMemoryInviteRepository();
+
+const createUserService = (userRepository: InMemoryUserRepository) =>
+  new UserService(userRepository);
+
+const createInviteService = (
+  userService: UserService,
+  inviteRepository: InMemoryInviteRepository,
+  inviteEventHandlers: InviteServiceEventPublishers
+) => new InviteService(userService, inviteRepository, inviteEventHandlers);
 
 const resolveRouters = ({
   stage,
   keySet,
-  publishEvent,
+  internalEventPublisher = () => Promise.resolve(),
+  authority = "localhost:80",
 }: RouterParameters): Record<RouterType, Router> => {
-  const userRepository =
-    stage !== "production"
-      ? new InMemoryUserRepository()
-      : new InMemoryUserRepository();
-  const inviteRepository =
-    stage !== "production"
-      ? new InMemoryInviteRepository()
-      : new InMemoryInviteRepository();
-  const userService = new UserService(userRepository);
-  const inviteService = new InviteService(
+  const userRepository = createUserRepository(stage);
+  const inviteRepository = createInviteRepository(stage);
+  const userService = createUserService(userRepository);
+  const inviteEventHandlers = createInviteEventPublishers(
+    internalEventPublisher
+  );
+  const inviteService = createInviteService(
     userService,
     inviteRepository,
-    createInviteEventHandlers(publishEvent)
+    inviteEventHandlers
   );
   return {
-    [RouterType.userRouter]: userRouterFactory(userService, keySet),
+    [RouterType.userRouter]: userRouterFactory(userService, keySet, authority),
     [RouterType.inviteRouter]: inviteRouterFactory(inviteService),
   };
 };

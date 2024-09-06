@@ -14,6 +14,7 @@ describe(`create-invite-event-listener`, () => {
           createInviteEventListener(subscription, notificationFn);
 
           subscription.next({
+            recipient: "gerald@mail.com",
             type: InviteEvents.INVITATION_CREATED,
             payload: {
               inviter: "john@mail.com",
@@ -26,6 +27,7 @@ describe(`create-invite-event-listener`, () => {
 
           expect(notificationFn).toHaveBeenCalledWith({
             recipient: "gerald@mail.com",
+            type: InviteEvents.INVITATION_CREATED,
             payload: {
               inviter: "john@mail.com",
               invitee: "gerald@mail.com",

@@ -1,43 +1,156 @@
 import appFactory from "@/app";
+import createSocketServer from "@/create-socket-server";
 import TestFixture from "@/testing/test-fixture";
 import { Express } from "express";
+import http from "http";
 import { generateKeyPair } from "jose";
-import { io as ioc } from "socket.io-client";
+import { AddressInfo } from "net";
+import { io as ioc, Socket } from "socket.io-client";
+import createDispatchNotification from "./create-dispatch-notification";
 
 describe("notification-integration", () => {
   let app: Express;
   let testFixture: TestFixture;
+  let clientSocket: Socket;
+  let dispatchNotification;
 
   beforeEach(async () => {
+    const httpServer = http.createServer().listen();
+    const port = (httpServer.address() as AddressInfo).port;
+    const authority = `localhost:${port}`;
     const jwtKeyPair = await generateKeyPair("RS256");
     app = appFactory({
-      routerParameters: {
-        stage: "test",
-        keySet: {
-          jwtPrivateKey: jwtKeyPair.privateKey,
-          jwtPublicKey: jwtKeyPair.publicKey,
-        },
-        publishEvent: () => Promise.resolve(),
+      stage: "test",
+      keySet: {
+        jwtPrivateKey: jwtKeyPair.privateKey,
+        jwtPublicKey: jwtKeyPair.publicKey,
       },
+      internalEventPublisher: () => Promise.resolve(),
+      authority,
     });
     testFixture = new TestFixture(app);
+    httpServer.close();
+    const io = createSocketServer(app, {
+      port,
+      path: "/notification",
+      privateKey: jwtKeyPair.privateKey,
+    });
+    dispatchNotification = createDispatchNotification(io);
   });
+
+  afterEach(() => {
+    clientSocket.disconnect();
+    clientSocket.close();
+  });
+
   describe("given the user exists and is logged in", () => {
     describe("when the user connects to the notification endpoint", () => {
       it("the connection succeeds", async () => {
-        const playerOneAuth = await testFixture.registerAndLogin(
-          "player1@mail.com",
-          "password"
-        );
+        expect.assertions(2);
+        await testFixture.register({
+          email: "player1@mail.com",
+          password: "password",
+        });
 
-        const notificationSocket = ioc(`/notification`, {
+        const playerOneAuth = await testFixture.login({
+          email: "player1@mail.com",
+          password: "password",
+        });
+
+        const {
+          body: {
+            notification: { uri },
+          },
+          headers: { authorization },
+        } = playerOneAuth;
+
+        clientSocket = ioc(uri, {
           auth: {
-            token: playerOneAuth.split(" ")[1],
+            token: authorization.split(" ")[1],
           },
         });
 
-        notificationSocket.connect();
-        expect(notificationSocket.connected).toBe(true);
+        let resolvePromiseWhenSocketConnects: (value: unknown) => void;
+        const promiseToResolveWhenSocketConnects = new Promise((resolve) => {
+          resolvePromiseWhenSocketConnects = resolve;
+        });
+
+        clientSocket.on("connect", () => {
+          expect(clientSocket.connected).toBe(true);
+          resolvePromiseWhenSocketConnects("Success!");
+        });
+
+        return expect(promiseToResolveWhenSocketConnects).resolves.toBe(
+          "Success!"
+        );
+      });
+    });
+    describe(`and they are connected to the notification endpoint`, () => {
+      describe(`when a notification is dispatched to the user`, () => {
+        it(`they receive the notification`, async () => {
+          expect.assertions(1);
+
+          await testFixture.register({
+            email: "player1@mail.com",
+            password: "password",
+          });
+
+          const playerOneAuth = await testFixture.login({
+            email: "player1@mail.com",
+            password: "password",
+          });
+
+          const {
+            body: {
+              notification: { uri },
+            },
+            headers: { authorization },
+          } = playerOneAuth;
+
+          clientSocket = ioc(uri, {
+            auth: {
+              token: authorization.split(" ")[1],
+            },
+          });
+
+          let resolvePromiseWhenSocketReceivesEvent;
+          const promiseToBeResolvedWhenSocketReceivesEvent = new Promise(
+            (resolve) => {
+              resolvePromiseWhenSocketReceivesEvent = resolve;
+            }
+          );
+
+          let resolvePromiseWhenSocketConnects;
+          const promiseToBeResolvedWhenSocketConnects = new Promise(
+            (resolve) => {
+              resolvePromiseWhenSocketConnects = resolve;
+            }
+          );
+
+          clientSocket
+            .on("connection_established", () => {
+              resolvePromiseWhenSocketConnects();
+            })
+            .on("example_event", (payload) => {
+              resolvePromiseWhenSocketReceivesEvent(payload);
+            });
+
+          await promiseToBeResolvedWhenSocketConnects;
+
+          dispatchNotification({
+            recipient: "player1@mail.com",
+            type: "example_event",
+            payload: {
+              someData: "Good Job",
+            },
+          });
+
+          return expect(
+            promiseToBeResolvedWhenSocketReceivesEvent
+          ).resolves.toEqual({
+            someData: "Good Job",
+          });
+        });
       });
     });
   });

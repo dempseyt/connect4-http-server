@@ -1,6 +1,6 @@
 import InMemoryUserRepository from "../user/in-memory-user-repository";
 import UserService from "../user/user-service";
-import createInviteEventHandlers from "./create-invite-event-handlers";
+import createInviteEventPublishers from "./create-invite-event-publishers";
 import InMemoryInviteRepository from "./in-memory-invite-repository";
 import InviteService, { InvalidInvitationError } from "./invite-service";
 import { InviteEvents, InviteStatus } from "./invite-service-types.d";
@@ -43,7 +43,7 @@ describe("invite-service", () => {
     inviteService = new InviteService(
       userService,
       inviteRepository,
-      createInviteEventHandlers(() => Promise.resolve())
+      createInviteEventPublishers(() => Promise.resolve())
     );
   });
 

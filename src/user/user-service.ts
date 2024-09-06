@@ -1,3 +1,8 @@
+import {
+  AuthenticationFailedError,
+  NoSuchUserError,
+  UserAlreadyExistsError,
+} from "@/user/errors";
 import argon2 from "argon2";
 import { isEmpty } from "ramda";
 import {
@@ -6,10 +11,6 @@ import {
   UserRegisterDetails,
   UserRepository,
 } from "./user-repository";
-
-export class UserAlreadyExistsError extends Error {}
-export class AuthenticationFailedError extends Error {}
-export class NoSuchUserError extends Error {}
 
 type Uuid = `${string}-${string}-${string}-${string}`;
 

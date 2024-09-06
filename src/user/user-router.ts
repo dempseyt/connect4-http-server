@@ -22,7 +22,8 @@ const userDetailsRequestHandlerFactory =
 const loginRequestHandlerFactory =
   (
     userService: UserServiceInterface,
-    jwtPublicKey: JwtPublicKey
+    jwtPublicKey: JwtPublicKey,
+    authority: string
   ): RequestHandler =>
   async (req, res, next) => {
     try {
@@ -46,7 +47,10 @@ const loginRequestHandlerFactory =
         .setNotBefore("0 sec from now")
         .setSubject(email)
         .encrypt(jwtPublicKey);
-      res.setHeader("Authorization", `Basic ${jwt}`).status(200).send();
+      res
+        .setHeader("Authorization", `Basic ${jwt}`)
+        .status(200)
+        .send({ notification: { uri: `ws://${authority}/notification` } });
     } catch (error) {
       res.status(403).send({ errors: ["Login attempt failed."] });
     }
@@ -68,7 +72,8 @@ const registerRequestHandlerFactory =
 
 const userRouterFactory = (
   userService: UserServiceInterface,
-  keySet: KeySet
+  keySet: KeySet,
+  authority: string
 ) => {
   const userRouter = express.Router();
 
@@ -76,7 +81,7 @@ const userRouterFactory = (
   userRouter.post("/register", registerRequestHandlerFactory(userService));
   userRouter.post(
     "/login",
-    loginRequestHandlerFactory(userService, keySet.jwtPublicKey)
+    loginRequestHandlerFactory(userService, keySet.jwtPublicKey, authority)
   );
 
   return userRouter;
