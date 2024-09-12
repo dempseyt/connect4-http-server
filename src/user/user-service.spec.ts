@@ -1,10 +1,11 @@
-import argon2 from "argon2";
-import InMemoryUserRepository from "./in-memory-user-repository";
-import UserService, {
+import {
   AuthenticationFailedError,
   NoSuchUserError,
   UserAlreadyExistsError,
-} from "./user-service";
+} from "@/user/errors";
+import argon2 from "argon2";
+import InMemoryUserRepository from "./in-memory-user-repository";
+import UserService from "./user-service";
 
 describe("user-service", () => {
   let userService;
