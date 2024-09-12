@@ -1,38 +1,39 @@
 import { Express } from "express";
-import { createServer as createHTTPServer, Server as HTTPServer } from "http";
+import { createServer as createHTTPServer } from "http";
 import { jwtDecrypt, KeyLike } from "jose";
-import { Server, Socket } from "socket.io";
+import { AddressInfo } from "net";
+import { Server } from "socket.io";
 
 type ServerSideWebSocketOptions = {
+  path?: string;
   privateKey: KeyLike;
-  httpServer: HTTPServer;
+};
+
+export type ExpressWithPortAndSocket = Express & {
+  port?: number;
+  server?: Server;
 };
 
 const createSocketServer = (
-  app: Express,
-  { privateKey, httpServer }: ServerSideWebSocketOptions
+  app: ExpressWithPortAndSocket,
+  { privateKey, path }: ServerSideWebSocketOptions
 ) => {
-  httpServer = httpServer
-    ? httpServer.on("request", app)
-    : createHTTPServer(app).listen();
-  const socketServer = new Server(httpServer);
-  const onConnectCallback = async (socket: Socket) => {
-    if (typeof socket.handshake.auth.token === "string") {
-      const decryptedJWT = await jwtDecrypt(
-        socket.handshake.auth.token,
-        privateKey
-      );
-      const username = decryptedJWT.payload.email as string;
-      await socket.join(username);
-    }
+  const httpServer = createHTTPServer(app).listen();
+  const port = (httpServer.address() as AddressInfo).port;
+  const io = new Server(httpServer);
+
+  io.of(path).on("connection", async (socket) => {
+    const token = socket.handshake.auth.token;
+    const {
+      payload: { username },
+    } = await jwtDecrypt(token, privateKey);
+
+    socket.join(username as string);
     socket.emit("connection_established");
-  };
-  socketServer.on("connect", onConnectCallback);
-  socketServer.on("new_namespace", (namespace) =>
-    namespace.on("connect", onConnectCallback)
-  );
-  socketServer.of("/notifications");
-  return socketServer;
+  });
+
+  app.server = io;
+  app.port = port;
 };
 
 export default createSocketServer;
