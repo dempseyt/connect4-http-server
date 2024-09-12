@@ -5,7 +5,7 @@ import {
   SendInviteDetails,
   UserCredentials,
   UserDetails,
-} from "./test-fixture.d";
+} from "./types";
 
 interface TestFixture {
   register: (userDetails: UserDetails) => Promise<Response>;
