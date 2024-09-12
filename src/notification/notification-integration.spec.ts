@@ -1,7 +1,6 @@
 import appFactory from "@/app";
-import createSocketServer from "@/create-socket-server";
+import { ExpressWithPortAndSocket } from "@/create-socket-server";
 import TestFixture from "@/testing/test-fixture";
-import { Express } from "express";
 import http from "http";
 import { generateKeyPair } from "jose";
 import { AddressInfo } from "net";
@@ -9,7 +8,7 @@ import { io as ioc, Socket } from "socket.io-client";
 import createDispatchNotification from "./create-dispatch-notification";
 
 describe("notification-integration", () => {
-  let app: Express;
+  let app: ExpressWithPortAndSocket;
   let testFixture: TestFixture;
   let clientSocket: Socket;
   let dispatchNotification;
@@ -26,16 +25,9 @@ describe("notification-integration", () => {
         jwtPublicKey: jwtKeyPair.publicKey,
       },
       internalEventPublisher: () => Promise.resolve(),
-      authority,
     });
     testFixture = new TestFixture(app);
-    httpServer.close();
-    const io = createSocketServer(app, {
-      port,
-      path: "/notification",
-      privateKey: jwtKeyPair.privateKey,
-    });
-    dispatchNotification = createDispatchNotification(io);
+    dispatchNotification = createDispatchNotification(app.server);
   });
 
   afterEach(() => {
@@ -46,7 +38,7 @@ describe("notification-integration", () => {
   describe("given the user exists and is logged in", () => {
     describe("when the user connects to the notification endpoint", () => {
       it("the connection succeeds", async () => {
-        expect.assertions(2);
+        expect.assertions(1);
         await testFixture.register({
           email: "player1@mail.com",
           password: "password",
@@ -76,9 +68,10 @@ describe("notification-integration", () => {
         });
 
         clientSocket.on("connect", () => {
-          expect(clientSocket.connected).toBe(true);
           resolvePromiseWhenSocketConnects("Success!");
         });
+
+        clientSocket.connect();
 
         return expect(promiseToResolveWhenSocketConnects).resolves.toBe(
           "Success!"
