@@ -28,7 +28,7 @@ const createDetailsOfGameWith1x2SizeBoard = (): GameDetails => ({
   status: GameStatus.IN_PROGRESS,
   playerColors: {
     playerOneColor: "red",
-    playerTwoColor: "yellow"
+    playerTwoColor: "yellow",
   },
   players: {
     1: {
@@ -58,10 +58,21 @@ describe(`in-memory-game-repository`, () => {
   });
   describe(`saving a game`, () => {
     describe(`when given a game to save`, () => {
-      it(`saves the game`, () => {
-        expect(gameRepository.saveGame(gameDetails)).resolves.toEqual({
+      it(`saves the game`, async () => {
+        expect(await gameRepository.saveGame(gameDetails)).toEqual({
           uuid: expect.toBeUuid(),
           ...createDetailsOfGameWith1x2SizeBoard(),
+        });
+      });
+      describe(`and a uuid to save the game under`, () => {
+        describe(`which no other game has been saved under`, () => {
+          it(`saves the game`, async () => {
+            const gameUuid = "28c16599-1cd0-427d-b805-b1ea438e2a1f";
+            gameDetails.uuid = gameUuid;
+            await gameRepository.saveGame(gameDetails);
+            const loadedGameDetails = await gameRepository.loadGame(gameUuid);
+            expect(loadedGameDetails).toEqual(gameDetails);
+          });
         });
       });
     });
@@ -69,9 +80,9 @@ describe(`in-memory-game-repository`, () => {
   describe(`loading a game`, () => {
     describe(`given a game has been saved`, () => {
       describe(`when given the uuid of the game`, () => {
-        it(`returns teh details of the game`, async () => {
+        it(`returns the details of the game`, async () => {
           const gameUuid = (await gameRepository.saveGame(gameDetails)).uuid;
-          expect(gameRepository.loadGame(gameUuid)).resolves.toEqual({
+          expect(await gameRepository.loadGame(gameUuid)).toEqual({
             uuid: expect.toBeUuid(),
             ...gameDetails,
           });
