@@ -1,12 +1,24 @@
-import Game from "./game";
-import { GameRepository } from "./game-service.d";
+import { GameFactory, GameRepository } from "@/game/types.d";
+import { Uuid } from "@/session/types.d";
 
 export default class GameService {
   #gameRepository: GameRepository;
-  constructor(
-    gameRepository: GameRepository,
-    gameFactory: (...args: ConstructorParameters<typeof Game>) => Game
-  ) {
+  #gameFactory: GameFactory;
+
+  constructor(gameRepository: GameRepository, gameFactory: GameFactory) {
     this.#gameRepository = gameRepository;
+    this.#gameFactory = gameFactory;
+  }
+
+  async createGame() {
+    const game = this.#gameFactory();
+    const { uuid: gameUuid } = await this.#gameRepository.saveGame(
+      game.getDetails()
+    );
+    return gameUuid;
+  }
+
+  async getGameDetails(gameUuid: Uuid) {
+    return this.#gameRepository.loadGame(gameUuid);
   }
 }

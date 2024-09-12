@@ -1,12 +1,18 @@
+import InMemoryGameRepository from "@/game/in-memory-game-repository";
+import {
+  BoardCell,
+  GameDetails,
+  GameRepository,
+  GameStatus,
+  PlayerNumber,
+} from "@/game/types.d";
 import parseAsciiTable from "@/utils/parse-ascii-table";
-import { GameRepository } from "./game-service";
-import InMemoryGameRepository from "./in-memory-game-repository";
 
 const createBoardFromAsciiTable = (asciiTable: string) =>
   parseAsciiTable<BoardCell>(
     asciiTable,
     (cellContent: "1" | "2"): BoardCell => ({
-      occupyingPlayer: Number.parseInt(input) as 1 | 2,
+      occupyingPlayer: Number.parseInt(cellContent) as PlayerNumber,
     })
   );
 
@@ -17,17 +23,21 @@ const create1x2Board = () =>
 |---|---|`);
 
 const createDetailsOfGameWith1x2SizeBoard = (): GameDetails => ({
+  board: create1x2Board(),
   activePlayer: 1,
-  gameStatus: "IN_PROGRESS" as GameStatus.IN_PROGRESS,
-  validRowPlacementsByColumn: [0, 0],
-  playerStats: {
+  status: GameStatus.IN_PROGRESS,
+  playerColors: {
+    playerOneColor: "red",
+    playerTwoColor: "yellow"
+  },
+  players: {
     1: {
       player: 1,
-      disksLeft: 1,
+      discsLeft: 1,
     },
     2: {
       player: 2,
-      disksLeft: 2,
+      discsLeft: 2,
     },
   },
 });
@@ -39,6 +49,7 @@ describe(`in-memory-game-repository`, () => {
   beforeEach(() => {
     gameRepository = new InMemoryGameRepository();
   });
+
   describe(`creating a game repository`, () => {
     it(`creates an in-memory game repository`, () => {
       const repository = new InMemoryGameRepository();
@@ -59,7 +70,7 @@ describe(`in-memory-game-repository`, () => {
     describe(`given a game has been saved`, () => {
       describe(`when given the uuid of the game`, () => {
         it(`returns teh details of the game`, async () => {
-          const gameUuid = await gameRepository.saveGame(gameDetails);
+          const gameUuid = (await gameRepository.saveGame(gameDetails)).uuid;
           expect(gameRepository.loadGame(gameUuid)).resolves.toEqual({
             uuid: expect.toBeUuid(),
             ...gameDetails,

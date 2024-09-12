@@ -1,4 +1,4 @@
-import { GameRepository, Uuid } from "./game-service.d";
+import { GameRepository, Uuid } from "./game";
 
 export default class InMemoryGameRepository implements GameRepository {
   #games: Map<Uuid, PersistedGameDetails>;
