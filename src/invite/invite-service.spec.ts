@@ -1,9 +1,9 @@
-import InMemoryUserRepository from "../user/in-memory-user-repository";
-import UserService from "../user/user-service";
-import createInviteEventPublishers from "./create-invite-event-publishers";
-import InMemoryInviteRepository from "./in-memory-invite-repository";
-import InviteService, { InvalidInvitationError } from "./invite-service";
-import { InviteEvents, InviteStatus } from "./invite-service-types.d";
+import createInviteEventPublishers from "@/invite/create-invite-event-publishers";
+import InMemoryInviteRepository from "@/invite/in-memory-invite-repository";
+import InviteService, { InvalidInvitationError } from "@/invite/invite-service";
+import { InviteEvents, InviteStatus } from "@/invite/types.d";
+import InMemoryUserRepository from "@/user/in-memory-user-repository";
+import UserService from "@/user/user-service";
 
 const createUserServiceWithInviterAndInvitee = async () => {
   const userRepository = new InMemoryUserRepository();

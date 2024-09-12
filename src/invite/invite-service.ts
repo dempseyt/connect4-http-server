@@ -1,11 +1,13 @@
-import UserService from "../user/user-service";
-import { InviteRepository, PersistedInvite } from "./invite-repository";
 import {
   CreateInviteDetails,
   InviteDetails,
   InviteEvents,
+  InviteParticipants,
+  InviteRepository,
   InviteServiceEventPublishers,
-} from "./invite-service-types.d";
+  PersistedInvite,
+} from "@/invite/types.d";
+import UserService from "@/user/user-service";
 
 interface InviteServiceInterface {
   create: (createInviteDetails: CreateInviteDetails) => Promise<InviteDetails>;
@@ -31,7 +33,7 @@ class InviteService implements InviteServiceInterface {
     this.eventPublishers = eventPublishers;
   }
 
-  async create({ inviter, invitee }: CreateInviteDetails) {
+  async create({ inviter, invitee }: InviteParticipants) {
     if (inviter === invitee) {
       throw new InvalidInvitationError(
         "Users cannot send invites to themselves"
@@ -53,7 +55,6 @@ class InviteService implements InviteServiceInterface {
       invitee: invitee,
       exp: exp,
     });
-
     await this.eventPublishers[InviteEvents.INVITATION_CREATED](inviteDetails);
 
     return inviteDetails;
