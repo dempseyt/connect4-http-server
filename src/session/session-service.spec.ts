@@ -1,19 +1,24 @@
-import { NoSuchSessionError } from "./errors";
-import InMemorySessionRepository from "./in-memory-session-repository";
-import SessionService from "./session-service";
-import {
-  SessionRepositoryInterface,
-  SessionServiceInterface,
-  Uuid,
-} from "./session-service.d";
+import Game from "@/game/game";
+import GameService from "@/game/game-service";
+import InMemoryGameRepository from "@/game/in-memory-game-repository";
+import { NoSuchSessionError } from "@/session/errors";
+import InMemorySessionRepository from "@/session/in-memory-session-repository";
+import SessionService from "@/session/session-service";
 
 describe(`session-service`, () => {
-  let sessionRepository: SessionRepositoryInterface;
-  let sessionService: SessionServiceInterface;
-  beforeAll(() => {
+  let sessionRepository: InMemorySessionRepository;
+  let sessionService: SessionService;
+
+  beforeEach(() => {
     sessionRepository = new InMemorySessionRepository();
-    sessionService = new SessionService(sessionRepository);
+    const gameRepository = new InMemoryGameRepository();
+    const gameService = new GameService(
+      gameRepository,
+      (...args: ConstructorParameters<typeof Game>) => new Game(...args)
+    );
+    sessionService = new SessionService(sessionRepository, gameService);
   });
+
   describe(`creating a session service`, () => {
     describe(`given a session repository`, () => {
       it(`creates a session service`, () => {
@@ -65,10 +70,35 @@ describe(`session-service`, () => {
       });
       describe(`when provided with the uuid of a non-existent session`, () => {
         it(`throws a "no such session" error`, () => {
-          const sessionUuid = ">:)" as Uuid;
+          const sessionUuid = ">:)";
+          // @ts-expect-error
           expect(sessionService.getSession(sessionUuid)).rejects.toThrow(
             new NoSuchSessionError()
           );
+        });
+      });
+    });
+  });
+  describe(`adding games`, () => {
+    describe(`given an in-progress session`, () => {
+      describe(`with no games`, () => {
+        it(`add a new game to the session`, async () => {
+          const { uuid: sessionUuid } = await sessionService.createSession({
+            inviteeUuid: "c431db29-fede-4fb4-9434-b4befcab5891",
+            inviterUuid: "f6285576-0dd3-4364-adb3-99b4b98dbed2",
+          });
+          let gameUuids = await sessionService.getGameUuids(sessionUuid);
+          expect(gameUuids).toEqual([]);
+          expect(
+            sessionService.getActiveGameUuid(sessionUuid)
+          ).resolves.toBeUndefined();
+          await sessionService.addNewGame(sessionUuid);
+          const activeGameUuid = await sessionService.getActiveGameUuid(
+            sessionUuid
+          );
+          gameUuids = await sessionService.getGameUuids(sessionUuid);
+          expect(activeGameUuid).toBeUuid();
+          expect(gameUuids).toEqual([activeGameUuid]);
         });
       });
     });
