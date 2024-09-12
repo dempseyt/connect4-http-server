@@ -1,4 +1,9 @@
-import { GameRepository, Uuid } from "./game";
+import {
+  GameDetails,
+  GameRepository,
+  PersistedGameDetails,
+} from "@/game/types.d";
+import { Uuid } from "@/global";
 
 export default class InMemoryGameRepository implements GameRepository {
   #games: Map<Uuid, PersistedGameDetails>;
@@ -6,13 +11,13 @@ export default class InMemoryGameRepository implements GameRepository {
   constructor() {
     this.#games = new Map();
   }
-  saveGame(gameDetails: GameDetails) {
-    const gameUuid = crypto.randomUUID();
-    const persistedGameDetails = { ...gameDetails, uuid: gameUuid };
-    this.#games.set(gameUuid, persistedGameDetails);
-    return Promise.resolve(persistedGameDetails);
+  saveGame({ uuid = crypto.randomUUID(), ...gameDetails }: GameDetails) {
+    const persistedGameDetails = { ...gameDetails, uuid };
+    this.#games.set(uuid, persistedGameDetails);
+    return persistedGameDetails;
   }
+
   loadGame(gameUuid: Uuid) {
-    return Promise.resolve(this.#games.get(gameUuid));
+    return this.#games.get(gameUuid);
   }
 }
