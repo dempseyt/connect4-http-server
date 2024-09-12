@@ -1,5 +1,8 @@
 import GameService from "@/game/game-service";
-import { NoSuchSessionError } from "@/session/errors";
+import {
+  ActiveGameInProgressError,
+  NoSuchSessionError,
+} from "@/session/errors";
 import {
   SessionCreationDetails,
   SessionRepository,
@@ -36,9 +39,15 @@ export default class SessionService implements SessionServiceInterface {
     (await this.getSession(sessionUuid)).activeGameUuid;
 
   addNewGame = async (sessionUuid: Uuid) => {
-    const newGameUuid = await this.#gameService.createGame();
-    await this.#sessionRepository.addGame(sessionUuid, newGameUuid);
-    await this.#sessionRepository.setActiveGame(sessionUuid, newGameUuid);
-    return newGameUuid;
+    if ((await this.getActiveGameUuid(sessionUuid)) === undefined) {
+      const newGameUuid = await this.#gameService.createGame();
+      await this.#sessionRepository.addGame(sessionUuid, newGameUuid);
+      await this.#sessionRepository.setActiveGame(sessionUuid, newGameUuid);
+      return newGameUuid;
+    } else {
+      throw new ActiveGameInProgressError(
+        "You cannot add games whilst a game is in progress."
+      );
+    }
   };
 }
