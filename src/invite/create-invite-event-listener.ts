@@ -1,5 +1,6 @@
+import { InviteDetails, InviteEvents } from "@/invite/types.d";
+import { Notification } from "@/notification/types.d";
 import { Subject } from "rxjs";
-import { InviteDetails, InviteEvents } from "./invite-service-types.d";
 
 export type InviteCreatedEvent = {
   recipient: string;
@@ -9,11 +10,7 @@ export type InviteCreatedEvent = {
 
 const createInviteEventListener = <T extends InviteCreatedEvent>(
   subscription: Subject<T>,
-  notificationFn: (notification: {
-    recipient: string;
-    type: InviteEvents.INVITATION_CREATED;
-    payload: object;
-  }) => void
+  notificationFn: (notification: Notification) => void
 ) => {
   subscription.subscribe({
     next: (inviteCreatedEvent: InviteCreatedEvent) => {
@@ -22,7 +19,7 @@ const createInviteEventListener = <T extends InviteCreatedEvent>(
       if (type === InviteEvents.INVITATION_CREATED) {
         notificationFn({
           recipient: payload.invitee,
-          type: InviteEvents.INVITATION_CREATED,
+          type: InviteEvents.INVITATION_RECEIVED,
           payload,
         });
       }

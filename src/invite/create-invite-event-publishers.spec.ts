@@ -1,5 +1,5 @@
-import createInviteEventPublishers from "./create-invite-event-publishers";
-import { InviteEvents } from "./invite-service-types.d";
+import createInviteEventPublishers from "@/invite/create-invite-event-publishers";
+import { InviteEvents } from "@/invite/types.d";
 
 describe("create-invite-event-publishers", () => {
   describe("given an event publisher", () => {

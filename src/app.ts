@@ -1,7 +1,15 @@
 import resolveRouters from "@/resolve-routers";
 import express, { RequestHandler } from "express";
 import { jwtDecrypt } from "jose";
+import { Subject } from "rxjs";
+import createSocketServer, {
+  ExpressWithPortAndSocket,
+} from "./create-socket-server";
 import { JwtPrivateKey, JwtPublicKey, Stage } from "./global";
+import createInviteEventListener, {
+  InviteCreatedEvent,
+} from "./invite/create-invite-event-listener";
+import createDispatchNotification from "./notification/create-dispatch-notification";
 import validateUserRegisterRequest from "./user/validate-user-register-request";
 
 type AppParameters = {
@@ -11,7 +19,7 @@ type AppParameters = {
     jwtPrivateKey: JwtPrivateKey;
   };
   internalEventPublisher?: (type: unknown, payload: unknown) => Promise<void>;
-  authority?: string;
+  internalEventSubscriber?: Subject<InviteCreatedEvent>;
 };
 
 const createAuthenticationMiddleware =
@@ -37,16 +45,28 @@ const appFactory = ({
   stage,
   keySet,
   internalEventPublisher,
-  authority,
+  internalEventSubscriber = new Subject(),
 }: AppParameters) => {
   const { jwtPrivateKey: privateKey } = keySet;
-  const app = express();
+  const app = express() as ExpressWithPortAndSocket;
+
+  createSocketServer(app, {
+    path: "/notification",
+    privateKey,
+  });
+
+  createInviteEventListener(
+    internalEventSubscriber,
+    createDispatchNotification(app.server)
+  );
+
   const { userRouter, inviteRouter } = resolveRouters({
     stage,
     keySet,
     internalEventPublisher,
-    authority,
+    authority: `localhost:${app.port}`,
   });
+
   app.use(express.json());
   app.use(createAuthenticationMiddleware(privateKey));
   app.use("/user", validateUserRegisterRequest, userRouter);

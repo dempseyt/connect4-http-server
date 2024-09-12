@@ -1,8 +1,8 @@
+import { InviteEvents, InviteStatus } from "@/invite/types.d";
 import { Subject } from "rxjs";
 import createInviteEventListener, {
   InviteCreatedEvent,
 } from "./create-invite-event-listener";
-import { InviteEvents, InviteStatus } from "./invite-service-types.d";
 
 describe(`create-invite-event-listener`, () => {
   describe(`given a event subscription`, () => {
@@ -27,7 +27,7 @@ describe(`create-invite-event-listener`, () => {
 
           expect(notificationFn).toHaveBeenCalledWith({
             recipient: "gerald@mail.com",
-            type: InviteEvents.INVITATION_CREATED,
+            type: InviteEvents.INVITATION_RECEIVED,
             payload: {
               inviter: "john@mail.com",
               invitee: "gerald@mail.com",

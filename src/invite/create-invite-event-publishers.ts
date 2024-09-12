@@ -2,14 +2,19 @@ import {
   InviteDetails,
   InviteEvents,
   InviteServiceEventPublishers,
-} from "./invite-service-types.d";
+} from "@/invite/types.d";
+import { InviteCreatedEvent } from "./create-invite-event-listener";
 
 const createInviteEventPublishers = (
-  eventPublisher: (eventType: string, payload: unknown) => Promise<unknown>
+  eventPublisher: (eventDetails: InviteCreatedEvent) => Promise<unknown>
 ): InviteServiceEventPublishers => {
   return {
     [InviteEvents.INVITATION_CREATED]: (inviteDetails: InviteDetails) =>
-      eventPublisher(InviteEvents.INVITATION_CREATED, inviteDetails),
+      eventPublisher({
+        recipient: inviteDetails.invitee,
+        type: InviteEvents.INVITATION_CREATED,
+        payload: inviteDetails,
+      }),
   };
 };
 
