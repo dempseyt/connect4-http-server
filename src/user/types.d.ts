@@ -32,3 +32,15 @@ export type PersistedUser = {
   password: string;
   uuid: `${string}-${string}-${string}-${string}`;
 };
+
+export type UserRegisterRequest = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+};
+
+export type ValidationResult = {
+  isValid: boolean;
+  errors?: Array<{ message: string; path: string }>;
+};
