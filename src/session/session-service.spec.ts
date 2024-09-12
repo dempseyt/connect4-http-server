@@ -74,7 +74,6 @@ describe(`session-service`, () => {
       describe(`when provided with the uuid of a non-existent session`, () => {
         it(`throws a "no such session" error`, () => {
           const sessionUuid = ">:)";
-          // @ts-expect-error
           expect(sessionService.getSession(sessionUuid)).rejects.toThrow(
             new NoSuchSessionError()
           );
@@ -118,6 +117,24 @@ describe(`session-service`, () => {
               "You cannot add games whilst a game is in progress."
             )
           );
+        });
+      });
+    });
+  });
+  describe(`making moves`, () => {
+    describe(`given a session`, () => {
+      describe(`with an active game`, () => {
+        describe(`and a valid move`, () => {
+          it(`makes the move on the active game`, async () => {
+            const moveResult = await sessionService.submitMove({
+              player: 1,
+              position: {
+                row: 0,
+                column: 0,
+              },
+            });
+            expect(moveResult).toEqual({ moveSuccessful: true });
+          });
         });
       });
     });
