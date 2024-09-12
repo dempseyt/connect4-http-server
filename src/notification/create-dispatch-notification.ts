@@ -1,17 +1,12 @@
+import { Notification } from "@/notification/types.d";
 import { Server } from "socket.io";
 
 const createDispatchNotification = (server: Server) => {
-  const dispatchNotification = (notification: {
-    recipient: string;
-    type: string;
-    payload: object;
-  }) => {
+  return async (notification: Notification) =>
     server
       .of("/notification")
       .to(notification.recipient)
       .emit(notification.type, notification.payload);
-  };
-  return dispatchNotification;
 };
 
 export default createDispatchNotification;

@@ -1,17 +1,13 @@
 import appFactory from "@/app";
-import createSocketServer from "@/create-socket-server";
+import { ExpressWithPortAndSocket } from "@/create-socket-server";
 import createDispatchNotification from "@/notification/create-dispatch-notification";
 import TestFixture from "@/testing/test-fixture";
-import { Express } from "express";
-import http from "http";
 import { generateKeyPair } from "jose";
-import { AddressInfo } from "net";
 import { Socket as ClientSocket, io as ioc } from "socket.io-client";
 
 describe(`create-dispatch-notification`, () => {
   let testFixture: TestFixture;
-  let app: Express;
-  let httpServer: http.Server;
+  let app: ExpressWithPortAndSocket;
   let dispatchNotification;
   let callCreatedDispatchNotificationWhenPromiseResolves: (
     value: unknown
@@ -19,8 +15,8 @@ describe(`create-dispatch-notification`, () => {
 
   beforeEach(async () => {
     const jwtKeyPair = await generateKeyPair("RS256");
-    httpServer = http.createServer().listen();
-    const port = (httpServer.address() as AddressInfo).port;
+    // httpServer = http.createServer().listen();
+    // const port = (httpServer.address() as AddressInfo).port;
     app = appFactory({
       stage: "test",
       keySet: {
@@ -28,39 +24,19 @@ describe(`create-dispatch-notification`, () => {
         jwtPublicKey: jwtKeyPair.publicKey,
       },
       internalEventPublisher: () => Promise.resolve(),
-      authority: `localhost:${port}`,
     });
-    httpServer.close();
-    const io = createSocketServer(app, {
-      port,
-      path: "/notification",
-      privateKey: jwtKeyPair.privateKey,
-    });
-    dispatchNotification = createDispatchNotification(io);
+    dispatchNotification = createDispatchNotification(app.server);
     testFixture = new TestFixture(app);
   });
 
-  afterEach(() => {
-    httpServer.removeAllListeners();
-    httpServer.close();
-  });
-
   describe(`given a user connected to a socket`, () => {
-    let recipientSocket: ClientSocket;
-    let thirdPartySocket: ClientSocket;
-
-    afterEach(() => {
-      if (recipientSocket) {
-        recipientSocket.disconnect();
-        recipientSocket.close();
-      }
-      if (thirdPartySocket) {
-        thirdPartySocket.disconnect();
-        thirdPartySocket.close();
-      }
-    });
     describe(`and no other users are connected`, () => {
       describe(`when a message is dispatched to the user`, () => {
+        let recipientSocket: ClientSocket;
+        afterEach(() => {
+          recipientSocket.removeAllListeners();
+          recipientSocket.disconnect();
+        });
         it(`the user receives the message`, async () => {
           const singleUserPromise = new Promise((resolve) => {
             callCreatedDispatchNotificationWhenPromiseResolves = resolve;
@@ -85,7 +61,6 @@ describe(`create-dispatch-notification`, () => {
             },
             headers: { authorization },
           } = playerOneAuth;
-
           recipientSocket = ioc(uri, {
             auth: {
               token: authorization.split(" ")[1],
@@ -111,12 +86,17 @@ describe(`create-dispatch-notification`, () => {
             },
           });
 
-          await expect(userPromise).resolves.toEqual({
+          return expect(userPromise).resolves.toEqual({
             message: "Hello",
           });
         });
       });
       describe(`when multiple messages are dispatched to the user`, () => {
+        let recipientSocket: ClientSocket;
+        afterEach(() => {
+          recipientSocket.removeAllListeners();
+          recipientSocket.disconnect();
+        });
         it(`the user receives all messages`, async () => {
           const singleUserPromise = new Promise((resolve) => {
             callCreatedDispatchNotificationWhenPromiseResolves = resolve;
@@ -191,6 +171,15 @@ describe(`create-dispatch-notification`, () => {
     });
     describe(`and another user is connected to a socket`, () => {
       describe(`when a message is dispatched to the other user`, () => {
+        let recipientSocket: ClientSocket;
+        let thirdPartySocket: ClientSocket;
+
+        afterEach(() => {
+          thirdPartySocket.removeAllListeners();
+          thirdPartySocket.disconnect();
+          recipientSocket.removeAllListeners();
+          recipientSocket.disconnect();
+        });
         it("only sends the message to the intended recipient", async () => {
           const firstUserConnectionPromise = new Promise((resolve) => {
             callCreatedDispatchNotificationWhenPromiseResolves = resolve;
@@ -284,11 +273,14 @@ describe(`create-dispatch-notification`, () => {
           });
         });
       });
+
       describe(`when a message is dispatched to each user`, () => {
         let player1Socket: ClientSocket;
         let player2Socket: ClientSocket;
 
         afterEach(() => {
+          player1Socket.removeAllListeners();
+          player2Socket.removeAllListeners();
           player1Socket.disconnect();
           player2Socket.disconnect();
         });
