@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 describe("toBeDeeplyUnequal", () => {
   it("should fail when given objects are the same object", () => {
     const firstObject = { a: 1, b: 2 };

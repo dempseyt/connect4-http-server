@@ -1,5 +1,4 @@
 import parseAsciiTable from "@/utils/parse-ascii-table";
-import { describe, expect, it } from "vitest";
 
 describe("parse-ascii-table", () => {
   describe("given a table with no rows or columns", () => {
