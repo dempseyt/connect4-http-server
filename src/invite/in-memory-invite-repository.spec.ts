@@ -1,5 +1,5 @@
-import InMemoryInviteRepository from "./in-memory-invite-repository";
-import { InviteStatus } from "./invite-service-types.d";
+import InMemoryInviteRepository from "@/invite/in-memory-invite-repository";
+import { InviteStatus } from "@/invite/types.d";
 
 const lengthOfDayInMilliseconds = 1000 * 60 * 60 * 24;
 

@@ -1,10 +1,10 @@
-import { Uuid } from "@/user/user-repository";
 import {
   CreateInviteDetails,
   InviteRepository,
+  InviteStatus,
   PersistedInvite,
-} from "./invite-repository.d";
-import { InviteStatus } from "./invite-service-types.d";
+  Uuid,
+} from "@/invite/types.d";
 
 class InMemoryInviteRepository implements InviteRepository {
   private invites: Map<Uuid, PersistedInvite>;
