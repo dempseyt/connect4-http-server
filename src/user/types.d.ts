@@ -1,3 +1,5 @@
+import { Uuid } from "@/global";
+
 export interface UserRepository {
   create: (user: UserRegisterDetails) => Promise<PersistedUser>;
   findByEmail: (
@@ -9,8 +11,6 @@ export type UserCredentials = {
   email: string;
   password: string;
 };
-
-export type Uuid = `${string}-${string}-${string}-${string}`;
 
 export type UserDetails = {
   firstName: string;

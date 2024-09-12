@@ -1,5 +1,5 @@
 import Game from "@/game/game";
-import { Uuid } from "@/session/types";
+import { Uuid } from "@/global";
 
 export type PlayerNumber = 1 | 2;
 
@@ -32,6 +32,7 @@ export type GameDetails = {
   players: Record<PlayerNumber, PlayerStats>;
   status: GameStatus;
   playerColors: PlayerColorsType;
+  uuid?: Uuid;
 };
 
 export interface GameService {
@@ -47,8 +48,8 @@ export type PlayerColorsType = {
 export type PersistedGameDetails = GameDetails & { uuid: Uuid };
 
 export interface GameRepository {
-  saveGame: (gameDetails: GameDetails) => Promise<PersistedGameDetails>;
-  loadGame: (gameUuid: Uuid) => Promise<PersistedGameDetails>;
+  saveGame: (gameDetails: GameDetails) => PersistedGameDetails;
+  loadGame: (gameUuid: Uuid) => PersistedGameDetails;
 }
 
 interface GameInterface {

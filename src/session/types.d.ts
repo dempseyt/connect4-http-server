@@ -1,4 +1,4 @@
-export type Uuid = `${string}-${string}-${string}-${string}-${string}`;
+import { Uuid } from "@/global";
 
 export type SessionCreationDetails = {
   inviterUuid: Uuid;

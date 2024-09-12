@@ -1,5 +1,3 @@
-export type Uuid = `${string}-${string}-${string}-${string}`;
-
 export type InviteReceivedMessage = {
   inviter: string;
   invitee: string;

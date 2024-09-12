@@ -11,3 +11,4 @@ export type KeySet = {
 };
 
 // export type InternalEventPublisher = (queue: string)
+export type Uuid = `${string}-${string}-${string}-${string}`;
