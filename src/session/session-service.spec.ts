@@ -1,7 +1,10 @@
 import Game from "@/game/game";
 import GameService from "@/game/game-service";
 import InMemoryGameRepository from "@/game/in-memory-game-repository";
-import { NoSuchSessionError } from "@/session/errors";
+import {
+  ActiveGameInProgressError,
+  NoSuchSessionError,
+} from "@/session/errors";
 import InMemorySessionRepository from "@/session/in-memory-session-repository";
 import SessionService from "@/session/session-service";
 
@@ -99,6 +102,22 @@ describe(`session-service`, () => {
           gameUuids = await sessionService.getGameUuids(sessionUuid);
           expect(activeGameUuid).toBeUuid();
           expect(gameUuids).toEqual([activeGameUuid]);
+        });
+      });
+      describe(`with an active game`, () => {
+        it(`does not add a new game to the session`, async () => {
+          const { uuid: sessionUuid } = await sessionService.createSession({
+            inviterUuid: "335f8389-9ff7-4027-9b16-1040c5018106",
+            inviteeUuid: "637d72af-10c6-4421-a577-dd7a7d911075",
+          });
+
+          await sessionService.addNewGame(sessionUuid);
+
+          expect(sessionService.addNewGame(sessionUuid)).rejects.toThrow(
+            new ActiveGameInProgressError(
+              "You cannot add games whilst a game is in progress."
+            )
+          );
         });
       });
     });
