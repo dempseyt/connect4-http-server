@@ -56,4 +56,17 @@ interface GameInterface {
   getBoard: () => Board;
 }
 
+export type PlayerMoveResult = {
+  moveSuccessful: boolean;
+  message?: string;
+};
+
 export type GameFactory = (...args: ConstructorParameters<typeof Game>) => Game;
+
+export type PlayerMove = {
+  player: PlayerNumber;
+  position: {
+    row: number;
+    column: number;
+  };
+};
