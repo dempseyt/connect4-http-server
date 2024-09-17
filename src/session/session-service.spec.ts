@@ -1,6 +1,7 @@
 import Game from "@/game/game";
 import GameService from "@/game/game-service";
 import InMemoryGameRepository from "@/game/in-memory-game-repository";
+import { Uuid } from "@/global";
 import {
   ActiveGameInProgressError,
   NoSuchSessionError,
@@ -73,7 +74,7 @@ describe(`session-service`, () => {
       });
       describe(`when provided with the uuid of a non-existent session`, () => {
         it(`throws a "no such session" error`, () => {
-          const sessionUuid = ">:)";
+          const sessionUuid = ">:)" as Uuid;
           expect(sessionService.getSession(sessionUuid)).rejects.toThrow(
             new NoSuchSessionError()
           );
@@ -89,18 +90,31 @@ describe(`session-service`, () => {
             inviteeUuid: "c431db29-fede-4fb4-9434-b4befcab5891",
             inviterUuid: "f6285576-0dd3-4364-adb3-99b4b98dbed2",
           });
-          let gameUuids = await sessionService.getGameUuids(sessionUuid);
-          expect(gameUuids).toEqual([]);
+
+          expect(sessionService.getGameMetadata(sessionUuid)).resolves.toEqual(
+            []
+          );
           expect(
             sessionService.getActiveGameUuid(sessionUuid)
           ).resolves.toBeUndefined();
-          await sessionService.addNewGame(sessionUuid);
+          expect(
+            await sessionService.addNewGame(
+              sessionUuid,
+              "c431db29-fede-4fb4-9434-b4befcab5891",
+              "f6285576-0dd3-4364-adb3-99b4b98dbed2"
+            )
+          ).toBeUuid();
           const activeGameUuid = await sessionService.getActiveGameUuid(
             sessionUuid
           );
-          gameUuids = await sessionService.getGameUuids(sessionUuid);
           expect(activeGameUuid).toBeUuid();
-          expect(gameUuids).toEqual([activeGameUuid]);
+          expect(sessionService.getGameMetadata(sessionUuid)).resolves.toEqual([
+            {
+              gameUuid: activeGameUuid,
+              playerOneUuid: "c431db29-fede-4fb4-9434-b4befcab5891",
+              playerTwoUuid: "f6285576-0dd3-4364-adb3-99b4b98dbed2",
+            },
+          ]);
         });
       });
       describe(`with an active game`, () => {
@@ -110,9 +124,19 @@ describe(`session-service`, () => {
             inviteeUuid: "637d72af-10c6-4421-a577-dd7a7d911075",
           });
 
-          await sessionService.addNewGame(sessionUuid);
+          await sessionService.addNewGame(
+            sessionUuid,
+            "335f8389-9ff7-4027-9b16-1040c5018106",
+            "637d72af-10c6-4421-a577-dd7a7d911075"
+          );
 
-          expect(sessionService.addNewGame(sessionUuid)).rejects.toThrow(
+          expect(
+            sessionService.addNewGame(
+              sessionUuid,
+              "335f8389-9ff7-4027-9b16-1040c5018106",
+              "637d72af-10c6-4421-a577-dd7a7d911075"
+            )
+          ).rejects.toThrow(
             new ActiveGameInProgressError(
               "You cannot add games whilst a game is in progress."
             )
@@ -126,8 +150,20 @@ describe(`session-service`, () => {
       describe(`with an active game`, () => {
         describe(`and a valid move`, () => {
           it(`makes the move on the active game`, async () => {
+            const { uuid: sessionUuid } = await sessionService.createSession({
+              inviteeUuid: "4b8bf23e-b383-49cc-86af-cb7f82dd33cb",
+              inviterUuid: "704a2fb8-dcc6-4c2f-920c-55ab0ac5c08c",
+            });
+
+            await sessionService.addNewGame(
+              sessionUuid,
+              "4b8bf23e-b383-49cc-86af-cb7f82dd33cb",
+              "704a2fb8-dcc6-4c2f-920c-55ab0ac5c08c"
+            );
+
             const moveResult = await sessionService.submitMove({
-              player: 1,
+              sessionUuid,
+              playerUuid: "4b8bf23e-b383-49cc-86af-cb7f82dd33cb",
               position: {
                 row: 0,
                 column: 0,
