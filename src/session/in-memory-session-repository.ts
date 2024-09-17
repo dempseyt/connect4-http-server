@@ -1,11 +1,10 @@
+import { Uuid } from "@/global";
 import {
   SessionCreationDetails,
   SessionDetails,
   SessionRepository,
   SessionStatus,
-  Uuid,
 } from "@/session/types.d";
-
 export default class InMemorySessionRepository implements SessionRepository {
   #sessions: Map<Uuid, SessionDetails>;
 
@@ -24,7 +23,7 @@ export default class InMemorySessionRepository implements SessionRepository {
         uuid: inviteeUuid,
       },
       status: SessionStatus.IN_PROGRESS,
-      gameUuids: [],
+      games: [],
     };
 
     this.#sessions.set(sessionUuid, sessionDetails);
@@ -33,9 +32,18 @@ export default class InMemorySessionRepository implements SessionRepository {
 
   getSession = async (sessionUuid: Uuid) => this.#sessions.get(sessionUuid);
 
-  addGame = async (sessionUuid: Uuid, gameUuid: Uuid) => {
+  addGame = async (
+    sessionUuid: Uuid,
+    gameUuid: Uuid,
+    playerOneUuid: Uuid,
+    playerTwoUuid: Uuid
+  ) => {
     const sessionDetails = await this.getSession(sessionUuid);
-    sessionDetails.gameUuids.push(gameUuid);
+    sessionDetails.games.push({
+      gameUuid,
+      playerOneUuid,
+      playerTwoUuid,
+    });
     return sessionDetails;
   };
 
