@@ -1,5 +1,5 @@
-import { GameFactory, GameRepository } from "@/game/types.d";
-import { Uuid } from "@/session/types.d";
+import { GameFactory, GameRepository, PlayerMove } from "@/game/types.d";
+import { Uuid } from "@/global";
 
 export default class GameService {
   #gameRepository: GameRepository;
@@ -20,5 +20,9 @@ export default class GameService {
 
   async getGameDetails(gameUuid: Uuid) {
     return this.#gameRepository.loadGame(gameUuid);
+  }
+
+  async submitMove(gameUuid: Uuid, playerMove: PlayerMove) {
+    return { moveSuccessful: true };
   }
 }
