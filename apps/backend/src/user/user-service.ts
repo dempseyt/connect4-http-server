@@ -3,7 +3,7 @@ import {
   NoSuchUserError,
   UserAlreadyExistsError,
 } from "@/user/errors";
-import argon2 from "argon2";
+import argon2 from "@node-rs/argon2";
 import { isEmpty } from "ramda";
 import {
   UserCredentials,
@@ -16,10 +16,10 @@ type Uuid = `${string}-${string}-${string}-${string}`;
 
 export interface UserServiceInterface {
   create: (
-    userDetails: UserRegisterDetails
+    userDetails: UserRegisterDetails,
   ) => Promise<UserRegisterDetails & { uuid: Uuid }>;
   authenticate: (
-    userCredentials: UserCredentials
+    userCredentials: UserCredentials,
   ) => Promise<{ message: string }>;
   getUserDetails: (userEmail: string) => Promise<UserDetails | void>;
   getDoesUserExist: (userEmail: string) => Promise<boolean>;
@@ -47,7 +47,7 @@ class UserService implements UserServiceInterface {
     if (userDetails !== undefined) {
       const isValidPassword = await argon2.verify(
         userDetails.password,
-        password
+        password,
       );
       if (isValidPassword) {
         return {

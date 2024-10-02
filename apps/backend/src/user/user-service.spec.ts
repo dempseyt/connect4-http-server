@@ -3,7 +3,7 @@ import {
   NoSuchUserError,
   UserAlreadyExistsError,
 } from "@/user/errors";
-import argon2 from "argon2";
+import argon2 from "@node-rs/argon2";
 import InMemoryUserRepository from "./in-memory-user-repository";
 import UserService from "./user-service";
 
@@ -28,7 +28,7 @@ describe("user-service", () => {
             lastName: "Doe",
             email: "john@doe.com",
             uuid: expect.toBeUuid(),
-          })
+          }),
         );
       });
     });
@@ -46,9 +46,9 @@ describe("user-service", () => {
             lastName: "Doe",
             email: "john@doe.com",
             password: "Hello123",
-          })
+          }),
         ).rejects.toThrow(
-          new UserAlreadyExistsError("A user with that email already exists")
+          new UserAlreadyExistsError("A user with that email already exists"),
         );
       });
     });
@@ -80,7 +80,7 @@ describe("user-service", () => {
             password: "wrongpassword",
           };
           expect(userService.authenticate(userCredentials)).rejects.toThrow(
-            new AuthenticationFailedError("Authentication failed")
+            new AuthenticationFailedError("Authentication failed"),
           );
         });
       });
@@ -111,7 +111,7 @@ describe("user-service", () => {
             password: "iluvbowser",
           };
           expect(userService.authenticate(userCredentials)).rejects.toThrow(
-            new AuthenticationFailedError("Authentication failed")
+            new AuthenticationFailedError("Authentication failed"),
           );
         });
       });
@@ -124,7 +124,7 @@ describe("user-service", () => {
         const userService = new UserService(userRepository);
         const userEmail = "johndoe@hotmail.com";
         expect(userService.getUserDetails(userEmail)).rejects.toThrow(
-          new NoSuchUserError("User does not exist")
+          new NoSuchUserError("User does not exist"),
         );
       });
     });
@@ -139,7 +139,7 @@ describe("user-service", () => {
         await userService.create(UserRegisterDetails);
 
         expect(
-          userService.getUserDetails(UserRegisterDetails.email)
+          userService.getUserDetails(UserRegisterDetails.email),
         ).resolves.toEqual({
           firstName: "Rami",
           lastName: "Beasley-Grad",
@@ -160,7 +160,7 @@ describe("user-service", () => {
         };
         await userService.create(userDetails);
         expect(userService.getDoesUserExist("john@mail.com")).resolves.toBe(
-          true
+          true,
         );
       });
     });
