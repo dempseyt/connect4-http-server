@@ -314,6 +314,7 @@ describe("invite-integration", () => {
           inviteUuid = inviteResponse.body.invite.uuid;
         });
         describe(`when the invite is accepted`, () => {
+          // TODO: I need to make sure this is working correctly
           it.skip(`accepts the invite and creates a new session`, async () => {
             const inviteeToken = (
               await testFixture.login({

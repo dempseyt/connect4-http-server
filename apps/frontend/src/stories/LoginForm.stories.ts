@@ -1,4 +1,4 @@
-import LoginForm from "@/stories/LoginForm";
+import LoginForm from "@/components/LoginForm";
 import { Meta, StoryObj } from "@storybook/react";
 import { fn, userEvent, within } from "@storybook/test";
 
@@ -112,5 +112,13 @@ export const TheOneWithAnSuccessfulLogin: Story = {
     const canvas = await fillOutLoginFormCorrectly(canvasElement);
     const loginButton = canvas.getByRole("button");
     await userEvent.click(loginButton);
+  },
+};
+
+// ---------------- STORIES FOR SIGN UP LINK ---------------------------
+
+export const TheOneWithASignUpRedirectHandler: Story = {
+  args: {
+    signupRedirectHandler: fn(() => Promise.resolve()),
   },
 };
